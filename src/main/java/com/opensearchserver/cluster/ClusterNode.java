@@ -18,6 +18,7 @@ package com.opensearchserver.cluster;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +40,8 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 
 	public final String name;
 
+	public final List<String> services;
+
 	final URI baseURI;
 
 	final URI checkURI;
@@ -55,11 +58,15 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 	 * 
 	 * @param hostname
 	 *            The hostname of the node
+	 * @param services
+	 *            The list of services provided by this node
 	 * @throws URISyntaxException
 	 */
-	ClusterNode(String hostname) throws URISyntaxException {
-		baseURI = toUri(hostname, null);
-		name = baseURI.toString().intern();
+	ClusterNode(String hostname, List<String> services)
+			throws URISyntaxException {
+		this.baseURI = toUri(hostname, null);
+		this.name = baseURI.toString().intern();
+		this.services = services;
 		checkURI = new URI(baseURI.getScheme(), null, baseURI.getHost(),
 				baseURI.getPort(), "/cluster", null, null);
 		latencyStart = 0;

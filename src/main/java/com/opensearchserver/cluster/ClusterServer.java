@@ -17,7 +17,6 @@ package com.opensearchserver.cluster;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Set;
 
 import javax.servlet.ServletException;
@@ -53,11 +52,7 @@ public class ClusterServer extends RestServer {
 	@Override
 	public void beforeStart(CommandLine cmd, File data_directory)
 			throws IOException, ParseException {
-		try {
-			ClusterManager.load(this, data_directory);
-		} catch (URISyntaxException e) {
-			throw new IOException(e);
-		}
+		ClusterManager.load(this, data_directory);
 	}
 
 	public static void main(String[] args) throws IOException, ParseException,

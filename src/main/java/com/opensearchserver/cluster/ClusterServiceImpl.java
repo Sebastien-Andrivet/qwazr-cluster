@@ -30,7 +30,7 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 		if (clusterNodeList == null)
 			return null;
 		ClusterStatusJson clusterStatus = new ClusterStatusJson(
-				ClusterManager.INSTANCE.getMasters());
+				ClusterManager.INSTANCE);
 		for (ClusterNode clusterNode : clusterNodeList)
 			clusterStatus.addNodeStatus(clusterNode);
 		return clusterStatus;

@@ -16,22 +16,25 @@
 package com.opensearchserver.cluster.json;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.opensearchserver.cluster.ClusterManager;
 import com.opensearchserver.cluster.ClusterNode;
 
 @JsonInclude(Include.NON_EMPTY)
 public class ClusterStatusJson {
 
+	public final boolean is_master;
 	public final Map<String, ClusterNodeStatusJson> nodes;
-	public final Set<String> masters;
+	public final Map<String, List<String>> masters;
 
-	public ClusterStatusJson(Set<String> masters) {
+	public ClusterStatusJson(ClusterManager clusterManager) {
+		this.is_master = clusterManager.isMaster();
 		this.nodes = new HashMap<String, ClusterNodeStatusJson>();
-		this.masters = masters;
+		this.masters = clusterManager.getMasters();
 	}
 
 	public void addNodeStatus(ClusterNode node) {
