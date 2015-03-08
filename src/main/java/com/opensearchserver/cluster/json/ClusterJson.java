@@ -17,7 +17,8 @@ package com.opensearchserver.cluster.json;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -26,8 +27,8 @@ import com.opensearchserver.utils.json.JsonMapper;
 @JsonInclude(Include.NON_EMPTY)
 public class ClusterJson {
 
-	public final Set<String> nodes;
-	public final Set<String> masters;
+	public final Map<String, List<String>> nodes;
+	public final Map<String, List<String>> masters;
 
 	public ClusterJson() {
 		nodes = null;

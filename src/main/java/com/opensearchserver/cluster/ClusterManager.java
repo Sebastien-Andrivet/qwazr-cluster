@@ -19,9 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -38,17 +37,21 @@ public class ClusterManager {
 	public static volatile ClusterManager INSTANCE = null;
 
 	public static void load(AbstractServer server, File directory)
-			throws IOException, URISyntaxException {
+			throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new ClusterManager(server, directory);
+		try {
+			INSTANCE = new ClusterManager(server, directory);
+		} catch (URISyntaxException e) {
+			throw new IOException(e);
+		}
 	}
 
 	public static final String CLUSTER_JSON_NAME = "cluster.json";
 
 	private final ConcurrentHashMap<String, ClusterNode> clusterNodeMap;
 
-	private final Set<String> masters;
+	private final ConcurrentHashMap<String, List<String>> masters;
 
 	private List<ClusterNode> clusterNodeList;
 
@@ -57,6 +60,8 @@ public class ClusterManager {
 	private final ClusterMonitoringThread clusterMonitoringThread;
 
 	private final String meURI;
+
+	private final boolean isMaster;
 
 	protected int port;
 
@@ -72,24 +77,41 @@ public class ClusterManager {
 			clusterNodeMap = null;
 			clusterMonitoringThread = null;
 			masters = null;
+			isMaster = false;
 			return;
 		}
 		clusterNodeMap = new ConcurrentHashMap<String, ClusterNode>();
 		if (cluster.nodes != null) {
-			for (String nodeHostname : cluster.nodes) {
-				ClusterNode clusterNode = new ClusterNode(nodeHostname);
+			for (Map.Entry<String, List<String>> entry : cluster.nodes
+					.entrySet()) {
+				ClusterNode clusterNode = new ClusterNode(entry.getKey(),
+						entry.getValue());
 				clusterNodeMap.put(clusterNode.baseURI.toString().intern(),
 						clusterNode);
 			}
 		}
-		masters = new HashSet<String>();
+		boolean isMaster = false;
+		masters = new ConcurrentHashMap<String, List<String>>();
 		if (cluster.masters != null) {
-			for (String masterHostname : cluster.masters)
-				masters.add(ClusterNode.toUri(masterHostname, null).toString()
-						.intern());
+			for (Map.Entry<String, List<String>> entry : cluster.masters
+					.entrySet()) {
+				String name = ClusterNode.toUri(entry.getKey(), null)
+						.toString().intern();
+				if (name == meURI)
+					isMaster = true;
+				for (String service : entry.getValue()) {
+					List<String> serviceList = masters.get(service);
+					if (serviceList == null) {
+						serviceList = new ArrayList<String>(1);
+						masters.put(service, serviceList);
+					}
+					serviceList.add(name);
+				}
+			}
 		}
 		buildNodeList();
-		if (masters.contains(meURI))
+		this.isMaster = isMaster;
+		if (isMaster)
 			clusterMonitoringThread = new ClusterMonitoringThread(60);
 		else
 			clusterMonitoringThread = null;
@@ -103,12 +125,16 @@ public class ClusterManager {
 		clusterNodeList = newClusterNodeList;
 	}
 
-	List<ClusterNode> getClusterNodeList() {
+	public List<ClusterNode> getClusterNodeList() {
 		return clusterNodeList;
 	}
 
-	Set<String> getMasters() {
+	public Map<String, List<String>> getMasters() {
 		return masters;
+	}
+
+	public boolean isMaster() {
+		return isMaster;
 	}
 
 }
