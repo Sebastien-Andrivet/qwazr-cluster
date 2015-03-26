@@ -20,14 +20,16 @@ import java.io.IOException;
 import java.util.Set;
 
 import javax.servlet.ServletException;
+import javax.ws.rs.ApplicationPath;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 
+import com.opensearchserver.utils.server.AbstractServer;
 import com.opensearchserver.utils.server.RestApplication;
-import com.opensearchserver.utils.server.RestServer;
+import com.opensearchserver.utils.server.ServletApplication;
 
-public class ClusterServer extends RestServer {
+public class ClusterServer extends AbstractServer {
 
 	private final static int DEFAULT_PORT = 9099;
 	private final static String DEFAULT_HOSTNAME = "0.0.0.0";
@@ -35,10 +37,10 @@ public class ClusterServer extends RestServer {
 	private final static String DEFAULT_DATADIR_NAME = "opensearchserver_cluster";
 
 	private ClusterServer() {
-		super(DEFAULT_HOSTNAME, DEFAULT_PORT, MAIN_JAR,
-				ClusterApplication.class, DEFAULT_DATADIR_NAME);
+		super(DEFAULT_HOSTNAME, DEFAULT_PORT, MAIN_JAR, DEFAULT_DATADIR_NAME);
 	}
 
+	@ApplicationPath("/cluster")
 	public static class ClusterApplication extends RestApplication {
 
 		@Override
@@ -49,10 +51,30 @@ public class ClusterServer extends RestServer {
 		}
 	}
 
+	public static void load(AbstractServer server, File data_directory,
+			Set<Class<?>> classes) throws IOException {
+		ClusterManager.load(server, data_directory);
+		if (classes != null)
+			classes.add(ClusterApplication.class);
+	}
+
 	@Override
-	public void beforeStart(CommandLine cmd, File data_directory)
-			throws IOException, ParseException {
-		ClusterManager.load(this, data_directory);
+	public void commandLine(CommandLine cmd) throws IOException {
+	}
+
+	@Override
+	public void load() throws IOException {
+		load(this, getCurrentDataDir(), null);
+	}
+
+	@Override
+	public RestApplication getRestApplication() {
+		return new ClusterApplication();
+	}
+
+	@Override
+	protected ServletApplication getServletApplication() {
+		return null;
 	}
 
 	public static void main(String[] args) throws IOException, ParseException,

@@ -49,6 +49,9 @@ public class ClusterManager {
 
 	public static final String CLUSTER_JSON_NAME = "cluster.json";
 
+	private static final String CLUSTER_CONF_PATH = System
+			.getProperty("com.opensearchserver.cluster.conf");
+
 	private final ConcurrentHashMap<String, ClusterNode> clusterNodeMap;
 
 	private final ConcurrentHashMap<String, List<String>> masters;
@@ -67,12 +70,17 @@ public class ClusterManager {
 
 	private ClusterManager(AbstractServer server, File rootDirectory)
 			throws IOException, URISyntaxException {
-		this.port = server.getCurrentTcpPort();
+		this.port = server.getRestTcpPort();
 		meURI = ClusterNode.toUri(server.getCurrentHostname(), port).toString()
 				.intern();
 		logger.info("Server: " + meURI);
-		clusterJsonFile = new File(rootDirectory, CLUSTER_JSON_NAME);
+
+		// Look for the configuration file
+		clusterJsonFile = CLUSTER_CONF_PATH != null ? new File(
+				CLUSTER_CONF_PATH) : new File(rootDirectory, CLUSTER_JSON_NAME);
 		ClusterJson cluster = ClusterJson.newInstance(clusterJsonFile);
+
+		// No configuration file ? Okay, we are a simple node
 		if (cluster == null) {
 			clusterNodeMap = null;
 			clusterMonitoringThread = null;
