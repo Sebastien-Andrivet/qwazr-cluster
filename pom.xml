@@ -12,8 +12,8 @@
 	<url>http://www.opensearchserver.com</url>
 	<licenses>
 		<license>
-			<name>Apache License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<name>General Public License, Version 3.0</name>
+			<url>http://www.gnu.org/licenses/gpl.html</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
@@ -28,7 +28,7 @@
 		<url>git@github.com:opensearchserver/oss-cluster.git</url>
 	</scm>
 	<issueManagement>
-		<url>https://github.com/opensearchserver/oss-renderer/issues</url>
+		<url>https://github.com/opensearchserver/oss-cluster/issues</url>
 	</issueManagement>
 	<ciManagement>
 		<url>http://www.open-search-server.com/jenkins</url>
@@ -42,7 +42,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<resteasy.version>3.0.10.Final</resteasy.version>
-		<undertow.version>1.1.2.Final</undertow.version>
+		<undertow.version>1.1.3.Final</undertow.version>
 		<skipTests>true</skipTests>
 		<httpclient.version>4.4</httpclient.version>
 		<jackson.version>2.5.1</jackson.version>
@@ -157,7 +157,7 @@
 		<dependency>
 			<groupId>com.googlecode.concurrentlinkedhashmap</groupId>
 			<artifactId>concurrentlinkedhashmap-lru</artifactId>
-			<version>1.4</version>
+			<version>1.4.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
