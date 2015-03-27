@@ -25,6 +25,8 @@ import javax.ws.rs.ApplicationPath;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 
+import com.opensearchserver.cluster.manager.ClusterManager;
+import com.opensearchserver.cluster.service.ClusterServiceImpl;
 import com.opensearchserver.utils.server.AbstractServer;
 import com.opensearchserver.utils.server.RestApplication;
 import com.opensearchserver.utils.server.ServletApplication;
@@ -40,7 +42,7 @@ public class ClusterServer extends AbstractServer {
 		super(DEFAULT_HOSTNAME, DEFAULT_PORT, MAIN_JAR, DEFAULT_DATADIR_NAME);
 	}
 
-	@ApplicationPath("/cluster")
+	@ApplicationPath("/")
 	public static class ClusterApplication extends RestApplication {
 
 		@Override

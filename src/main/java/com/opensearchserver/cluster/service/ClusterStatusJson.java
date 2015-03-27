@@ -13,32 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opensearchserver.cluster.json;
+package com.opensearchserver.cluster.service;
 
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.opensearchserver.cluster.ClusterManager;
-import com.opensearchserver.cluster.ClusterNode;
+import com.opensearchserver.cluster.manager.ClusterManager;
+import com.opensearchserver.cluster.manager.ClusterNode;
 
 @JsonInclude(Include.NON_EMPTY)
 public class ClusterStatusJson {
 
 	public final boolean is_master;
 	public final Map<String, ClusterNodeStatusJson> nodes;
-	public final Map<String, List<String>> masters;
+	public final Map<String, Set<String>> services;
 
 	public ClusterStatusJson(ClusterManager clusterManager) {
 		this.is_master = clusterManager.isMaster();
 		this.nodes = new HashMap<String, ClusterNodeStatusJson>();
-		this.masters = clusterManager.getMasters();
+		this.services = new HashMap<String, Set<String>>();
 	}
 
 	public void addNodeStatus(ClusterNode node) {
-		nodes.put(node.name, node.getStatus());
+		nodes.put(node.address, node.getStatus());
+		if (node.services == null)
+			return;
+		for (String service : node.services) {
+			service = service.intern();
+			Set<String> serviceNodes = services.get(service);
+			if (serviceNodes == null) {
+				serviceNodes = new HashSet<String>();
+				services.put(service, serviceNodes);
+			}
+			serviceNodes.add(node.address);
+		}
 	}
-
 }
