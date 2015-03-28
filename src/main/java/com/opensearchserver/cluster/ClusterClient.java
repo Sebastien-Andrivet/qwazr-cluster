@@ -15,6 +15,88 @@
  */
 package com.opensearchserver.cluster;
 
-public class ClusterClient {
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.List;
+
+import javax.ws.rs.core.Response;
+
+import org.apache.http.client.fluent.Request;
+import org.apache.http.client.utils.URIBuilder;
+
+import com.opensearchserver.cluster.service.ClusterNodeRegisterJson;
+import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
+import com.opensearchserver.cluster.service.ClusterServiceInterface;
+import com.opensearchserver.cluster.service.ClusterServicesStatusJson;
+import com.opensearchserver.cluster.service.ClusterStatusJson;
+import com.opensearchserver.utils.json.JsonClientAbstract;
+import com.opensearchserver.utils.json.JsonClientException;
+
+public class ClusterClient extends JsonClientAbstract implements
+		ClusterServiceInterface {
+
+	public ClusterClient(String url, int msTimeOut) throws URISyntaxException {
+		super(url, msTimeOut);
+	}
+
+	@Override
+	public ClusterStatusJson list() {
+		try {
+			URIBuilder uriBuilder = getBaseUrl("/cluster/");
+			Request request = Request.Get(uriBuilder.build());
+			return execute(request, null, msTimeOut, ClusterStatusJson.class,
+					200);
+		} catch (URISyntaxException | IOException e) {
+			throw new JsonClientException(e);
+		}
+	}
+
+	@Override
+	public ClusterNodeStatusJson register(ClusterNodeRegisterJson register) {
+		try {
+			URIBuilder uriBuilder = getBaseUrl("/cluster/");
+			Request request = Request.Post(uriBuilder.build());
+			return execute(request, register, msTimeOut,
+					ClusterNodeStatusJson.class, 200);
+		} catch (URISyntaxException | IOException e) {
+			throw new JsonClientException(e);
+		}
+	}
+
+	@Override
+	public Response unregister(String address) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Response check(String checkValue) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ClusterServicesStatusJson getServices() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<String> getActiveNodes(String service_name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getActiveNodeRandom(String service_name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<String> getInactiveNodes(String service_name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

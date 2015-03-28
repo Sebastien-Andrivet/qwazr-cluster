@@ -31,11 +31,20 @@ public class ClusterStatusJson {
 	public final boolean is_master;
 	public final Map<String, ClusterNodeStatusJson> nodes;
 	public final Map<String, Set<String>> services;
+	public final Set<String> masters;
+
+	public ClusterStatusJson() {
+		is_master = false;
+		nodes = null;
+		services = null;
+		masters = null;
+	}
 
 	public ClusterStatusJson(ClusterManager clusterManager) {
 		this.is_master = clusterManager.isMaster();
 		this.nodes = new HashMap<String, ClusterNodeStatusJson>();
 		this.services = new HashMap<String, Set<String>>();
+		this.masters = clusterManager.getMasterSet();
 	}
 
 	public void addNodeStatus(ClusterNode node) {

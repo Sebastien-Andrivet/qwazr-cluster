@@ -22,13 +22,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.ws.rs.core.Response.Status;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.opensearchserver.cluster.service.ClusterServicesStatusJson;
 import com.opensearchserver.utils.json.JsonApplicationException;
 import com.opensearchserver.utils.server.AbstractServer;
 
@@ -57,15 +57,11 @@ public class ClusterManager {
 	private static final String CLUSTER_CONF_PATH = System
 			.getProperty("com.opensearchserver.cluster.conf");
 
-	private final ConcurrentHashMap<String, ClusterNode> clusterNodeMap;
-
-	private final ClusterNodeByServiceMap nodesByServiceMap;
+	private final ClusterNodeMap clusterNodeMap;
 
 	private final Set<String> clusterMasterSet;
 
 	private final String myAddress;
-
-	private List<ClusterNode> clusterNodeList;
 
 	private final ClusterMonitoringThread clusterMonitoringThread;
 
@@ -114,65 +110,66 @@ public class ClusterManager {
 		if (!isMaster) {
 			clusterNodeMap = null;
 			clusterMonitoringThread = null;
-			nodesByServiceMap = null;
 			isMaster = false;
 			return;
 		}
 
 		// We load the cluster node map
-		clusterNodeMap = new ConcurrentHashMap<String, ClusterNode>();
-		nodesByServiceMap = new ClusterNodeByServiceMap();
-		buildNodeList();
+		clusterNodeMap = new ClusterNodeMap();
 
 		// All is set, let's start the monitoring
 		clusterMonitoringThread = new ClusterMonitoringThread(60);
 	}
 
-	private void buildNodeList() {
-		List<ClusterNode> newClusterNodeList = new ArrayList<ClusterNode>(
-				clusterNodeMap.size());
-		for (ClusterNode clusterNode : clusterNodeMap.values())
-			newClusterNodeList.add(clusterNode);
-		clusterNodeList = newClusterNodeList;
+	private ClusterNodeMap checkMaster() {
+		if (clusterNodeMap == null)
+			throw new JsonApplicationException(Status.NOT_ACCEPTABLE,
+					"I am not a master");
+		return clusterNodeMap;
 	}
 
-	public ClusterNode setClusterNode(String address, Set<String> services)
+	public ClusterNode upsertNode(String address, Set<String> services)
 			throws URISyntaxException {
-		if (clusterNodeMap == null || nodesByServiceMap == null)
-			throw new JsonApplicationException(Status.NOT_ACCEPTABLE,
-					"I am not a master");
-		ClusterNode newClusterNode = new ClusterNode(address, services);
-		ClusterNode oldClusterNode = clusterNodeMap.put(newClusterNode.address,
-				newClusterNode);
-		if (oldClusterNode != null)
-			nodesByServiceMap.remove(oldClusterNode);
-		nodesByServiceMap.insert(newClusterNode);
-		buildNodeList();
-		return newClusterNode;
+		return checkMaster().upsert(address, services);
 	}
 
-	public ClusterNode removeClusterNode(String address)
-			throws URISyntaxException {
-		if (clusterNodeMap == null || nodesByServiceMap == null)
-			throw new JsonApplicationException(Status.NOT_ACCEPTABLE,
-					"I am not a master");
-		address = ClusterNode.toAddress(address, null);
-		ClusterNode clusterNode = clusterNodeMap.remove(address);
-		if (clusterNode == null)
-			return null;
-		nodesByServiceMap.remove(clusterNode);
-		return clusterNode;
+	void updateNodeStatus(ClusterNode node) {
+		checkMaster().status(node);
 	}
 
-	public List<ClusterNode> getClusterNodeList() {
-		if (clusterNodeList == null)
-			throw new JsonApplicationException(Status.NOT_ACCEPTABLE,
-					"I am not a master");
-		return clusterNodeList;
+	public ClusterNode removeNode(String address) throws URISyntaxException {
+		return checkMaster().remove(address);
+	}
+
+	public List<ClusterNode> getNodeList() {
+		return checkMaster().getNodeList();
+	}
+
+	public Set<String> getMasterSet() {
+		return clusterMasterSet;
 	}
 
 	public boolean isMaster() {
 		return isMaster;
 	}
 
+	public List<String> getInactiveNodes(String service) {
+		List<String> nodeNameList = new ArrayList<String>();
+		checkMaster().populateInactive(service, nodeNameList);
+		return nodeNameList;
+	}
+
+	public List<String> getActiveNodes(String service) {
+		List<String> nodeNameList = new ArrayList<String>();
+		checkMaster().populateActive(service, nodeNameList);
+		return nodeNameList;
+	}
+
+	public String getActiveNodeRandom(String service) {
+		return checkMaster().getActiveRandom(service);
+	}
+
+	public ClusterServicesStatusJson getServicesStatus() {
+		return checkMaster().getServiceStatus();
+	}
 }

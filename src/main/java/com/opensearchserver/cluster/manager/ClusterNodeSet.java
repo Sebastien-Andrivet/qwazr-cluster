@@ -46,6 +46,14 @@ public class ClusterNodeSet {
 	 *            The cluster not to insert
 	 */
 	void active(ClusterNode node) {
+		// We check first if it is not already present in the right list
+		readWriteLock.r.lock();
+		try {
+			if (activeSet.contains(node))
+				return;
+		} finally {
+			readWriteLock.r.unlock();
+		}
 		readWriteLock.w.lock();
 		try {
 			inactiveSet.remove(node);
@@ -63,6 +71,14 @@ public class ClusterNodeSet {
 	 *            The cluster not to insert
 	 */
 	void inactive(ClusterNode node) {
+		// We check first if it is not already present in the right list
+		readWriteLock.r.lock();
+		try {
+			if (inactiveSet.contains(node))
+				return;
+		} finally {
+			readWriteLock.r.unlock();
+		}
 		readWriteLock.w.lock();
 		try {
 			activeSet.remove(node);
@@ -108,6 +124,18 @@ public class ClusterNodeSet {
 		if (aa == null)
 			return null;
 		return aa[RandomUtils.nextInt(0, aa.length)];
+	}
+
+	/**
+	 * @return if the set is empty
+	 */
+	boolean isEmpty() {
+		readWriteLock.r.lock();
+		try {
+			return activeSet.isEmpty() && inactiveSet.isEmpty();
+		} finally {
+			readWriteLock.r.unlock();
+		}
 	}
 
 }

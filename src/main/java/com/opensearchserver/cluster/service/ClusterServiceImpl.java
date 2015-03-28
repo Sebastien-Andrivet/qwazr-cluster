@@ -30,7 +30,7 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 	@Override
 	public ClusterStatusJson list() {
 		List<ClusterNode> clusterNodeList = ClusterManager.INSTANCE
-				.getClusterNodeList();
+				.getNodeList();
 		if (clusterNodeList == null)
 			return null;
 		ClusterStatusJson clusterStatus = new ClusterStatusJson(
@@ -53,7 +53,7 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
 		ClusterManager manager = ClusterManager.INSTANCE;
 		try {
-			ClusterNode clusterNode = manager.setClusterNode(register.address,
+			ClusterNode clusterNode = manager.upsertNode(register.address,
 					register.services);
 			return clusterNode.getStatus();
 		} catch (Exception e) {
@@ -67,7 +67,7 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
 		ClusterManager manager = ClusterManager.INSTANCE;
 		try {
-			ClusterNode clusterNode = manager.removeClusterNode(address);
+			ClusterNode clusterNode = manager.removeNode(address);
 			return clusterNode == null ? Response.status(Status.NOT_FOUND)
 					.build() : Response.ok().build();
 		} catch (Exception e) {
@@ -76,32 +76,32 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 	}
 
 	@Override
-	public ClusterStatusJson getInactiveNodes() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<String> getInactiveNodes(String service_name) {
+		if (service_name == null)
+			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
+		ClusterManager manager = ClusterManager.INSTANCE;
+		return manager.getInactiveNodes(service_name);
 	}
 
 	@Override
-	public ClusterStatusJson getActiveNodes() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<String> getActiveNodes(String service_name) {
+		if (service_name == null)
+			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
+		ClusterManager manager = ClusterManager.INSTANCE;
+		return manager.getActiveNodes(service_name);
 	}
 
 	@Override
-	public String getNodes(String service_name, Boolean random) {
-		// TODO Auto-generated method stub
-		return null;
+	public String getActiveNodeRandom(String service_name) {
+		if (service_name == null)
+			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
+		ClusterManager manager = ClusterManager.INSTANCE;
+		return manager.getActiveNodeRandom(service_name);
 	}
 
 	@Override
-	public ClusterStatusJson getInactiveNodes(String service_name) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public ClusterStatusJson getActiveNodes(String service_name) {
-		// TODO Auto-generated method stub
-		return null;
+	public ClusterServicesStatusJson getServices() {
+		ClusterManager manager = ClusterManager.INSTANCE;
+		return manager.getServicesStatus();
 	}
 }

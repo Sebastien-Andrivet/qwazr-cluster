@@ -15,6 +15,8 @@
  */
 package com.opensearchserver.cluster.service;
 
+import java.util.List;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -55,31 +57,26 @@ public interface ClusterServiceInterface {
 	public Response check(@HeaderParam(HEADER_CHECK_NAME) String checkValue);
 
 	@GET
-	@Path("/active")
-	@Produces(MediaType.TEXT_PLAIN)
-	public ClusterStatusJson getInactiveNodes();
-
-	@GET
-	@Path("/active")
-	@Produces(MediaType.TEXT_PLAIN)
-	public ClusterStatusJson getActiveNodes();
-
-	@GET
-	@Path("/service/{service_name}")
-	@Produces(MediaType.TEXT_PLAIN)
-	public String getNodes(@PathParam("service_name") String service_name,
-			@QueryParam("random") Boolean random);
+	@Path("/service")
+	@Produces(MediaType.APPLICATION_JSON)
+	public ClusterServicesStatusJson getServices();
 
 	@GET
 	@Path("/service/{service_name}/active")
 	@Produces(MediaType.TEXT_PLAIN)
-	public ClusterStatusJson getInactiveNodes(
+	public List<String> getActiveNodes(
+			@PathParam("service_name") String service_name);
+
+	@GET
+	@Path("/service/{service_name}/active/random")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getActiveNodeRandom(
 			@PathParam("service_name") String service_name);
 
 	@GET
 	@Path("/service/{service_name}/unactive")
 	@Produces(MediaType.TEXT_PLAIN)
-	public ClusterStatusJson getActiveNodes(
+	public List<String> getInactiveNodes(
 			@PathParam("service_name") String service_name);
 
 }

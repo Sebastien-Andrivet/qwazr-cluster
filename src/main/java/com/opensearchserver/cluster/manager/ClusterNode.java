@@ -31,8 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
-import com.opensearchserver.cluster.service.ClusterServiceInterface;
 import com.opensearchserver.cluster.service.ClusterNodeStatusJson.State;
+import com.opensearchserver.cluster.service.ClusterServiceInterface;
 
 public class ClusterNode implements FutureCallback<HttpResponse> {
 
@@ -41,7 +41,7 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 
 	public final String address;
 
-	public final Set<String> services;
+	public Set<String> services;
 
 	final URI baseURI;
 
@@ -86,7 +86,7 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 				state, latency, error);
 		if (error != null)
 			logger.warn(error);
-
+		ClusterManager.INSTANCE.updateNodeStatus(this);
 	}
 
 	void startCheck(CloseableHttpAsyncClient httpclient) {
@@ -158,6 +158,17 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 		return cns != null && cns.online;
 	}
 
+	/**
+	 * Update the service list
+	 * 
+	 * @param services
+	 *            A list of service name
+	 */
+	public void setServices(Set<String> services) {
+		this.services = services;
+		logger.info("Update services for " + address);
+	}
+
 	private static URI toUri(String hostname, Integer port)
 			throws URISyntaxException {
 		if (!hostname.contains("//"))
@@ -171,6 +182,17 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 				: u.getScheme(), null, u.getHost(), port, null, null, null);
 	}
 
+	/**
+	 * Format an address which can be used in hashset or hashmap
+	 * 
+	 * @param hostname
+	 *            the hostname
+	 * @param port
+	 *            the optional port
+	 * @return the address usable as a key
+	 * @throws URISyntaxException
+	 *             thrown if the hostname format is not valid
+	 */
 	public static String toAddress(String hostname, Integer port)
 			throws URISyntaxException {
 		return toUri(hostname, port).toString().intern();

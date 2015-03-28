@@ -46,14 +46,12 @@ public class ClusterMonitoringThread extends Thread {
 		// initial time wait
 		ThreadUtils.sleepMs(10000);
 		for (;;) {
-			System.out.println("ClusterThread.run");
 			long start = System.currentTimeMillis();
 			for (ClusterNode clusterNode : ClusterManager.INSTANCE
-					.getClusterNodeList())
+					.getNodeList())
 				clusterNode.startCheck(httpclient);
 			long sleep = monitoring_period
 					- (System.currentTimeMillis() - start);
-			System.out.println("Sleep " + sleep);
 			if (sleep > 0)
 				ThreadUtils.sleepMs(monitoring_period);
 		}

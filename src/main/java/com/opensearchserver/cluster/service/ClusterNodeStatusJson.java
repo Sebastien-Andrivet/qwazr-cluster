@@ -56,6 +56,14 @@ public class ClusterNodeStatusJson {
 
 	final public String error;
 
+	public ClusterNodeStatusJson() {
+		online = false;
+		latest_check = null;
+		state = null;
+		latency = null;
+		error = null;
+	}
+
 	public ClusterNodeStatusJson(Date latest_check, State state, Long latency,
 			String error) {
 		this.latest_check = latest_check;

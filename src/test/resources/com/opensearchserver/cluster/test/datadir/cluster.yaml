@@ -1,0 +1,8 @@
+# OpenSearchServer Cluster configuration YAML
+#
+# Enter addresses of the masters
+#
+
+masters: ["0.0.0.0:9099"]
+
+

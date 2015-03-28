@@ -33,8 +33,8 @@ import com.opensearchserver.utils.server.ServletApplication;
 
 public class ClusterServer extends AbstractServer {
 
-	private final static int DEFAULT_PORT = 9099;
-	private final static String DEFAULT_HOSTNAME = "0.0.0.0";
+	public final static int DEFAULT_PORT = 9099;
+	public final static String DEFAULT_HOSTNAME = "0.0.0.0";
 	private final static String MAIN_JAR = "oss-cluster.jar";
 	private final static String DEFAULT_DATADIR_NAME = "opensearchserver_cluster";
 
