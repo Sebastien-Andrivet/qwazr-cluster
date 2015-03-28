@@ -15,7 +15,10 @@
  */
 package com.opensearchserver.cluster.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -37,6 +40,19 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 		for (ClusterNode clusterNode : clusterNodeList)
 			clusterStatus.addNodeStatus(clusterNode);
 		return clusterStatus;
+	}
+
+	@Override
+	public Map<String, Set<String>> getNodes() {
+		ClusterManager manager = ClusterManager.INSTANCE;
+		Map<String, Set<String>> nodeMap = new HashMap<String, Set<String>>();
+		List<ClusterNode> clusterNodeList = manager.getNodeList();
+		if (clusterNodeList == null)
+			return nodeMap;
+		for (ClusterNode clusterNode : clusterNodeList)
+			if (clusterNode.services != null && !clusterNode.services.isEmpty())
+				nodeMap.put(clusterNode.address, clusterNode.services);
+		return nodeMap;
 	}
 
 	@Override
@@ -95,4 +111,5 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 		ClusterManager manager = ClusterManager.INSTANCE;
 		return manager.getServiceStatus(service_name);
 	}
+
 }

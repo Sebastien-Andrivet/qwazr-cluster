@@ -48,6 +48,8 @@ public class ClusterNodeStatusJson {
 
 	final public boolean online;
 
+	final public Date error_since;
+
 	final public Date latest_check;
 
 	final public State state;
@@ -58,6 +60,7 @@ public class ClusterNodeStatusJson {
 
 	public ClusterNodeStatusJson() {
 		online = false;
+		error_since = null;
 		latest_check = null;
 		state = null;
 		latency = null;
@@ -65,12 +68,16 @@ public class ClusterNodeStatusJson {
 	}
 
 	public ClusterNodeStatusJson(Date latest_check, State state, Long latency,
-			String error) {
+			String error, Date error_since) {
 		this.latest_check = latest_check;
 		this.state = state;
 		this.latency = latency;
 		this.error = error;
 		this.online = state != null && state == State.online;
+		if (!this.online) {
+			this.error_since = error_since == null ? latest_check : error_since;
+		} else
+			this.error_since = null;
 	}
 
 }

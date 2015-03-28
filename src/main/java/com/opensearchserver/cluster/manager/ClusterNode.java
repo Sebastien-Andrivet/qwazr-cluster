@@ -82,8 +82,10 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 	}
 
 	private void setStatus(long time, State state, Long latency, String error) {
-		this.clusterNodeStatus = new ClusterNodeStatusJson(new Date(time),
-				state, latency, error);
+		this.clusterNodeStatus = new ClusterNodeStatusJson(time == 0 ? null
+				: new Date(time), state, latency, error,
+				clusterNodeStatus == null ? null
+						: clusterNodeStatus.error_since);
 		if (error != null)
 			logger.warn(error);
 		ClusterManager.INSTANCE.updateNodeStatus(this);

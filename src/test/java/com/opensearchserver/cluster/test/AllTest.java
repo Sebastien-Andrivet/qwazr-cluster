@@ -18,6 +18,8 @@ package com.opensearchserver.cluster.test;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response;
@@ -132,14 +134,30 @@ public class AllTest {
 	}
 
 	@Test
-	public void test20_check_unregister() throws URISyntaxException {
+	public void test20_get_node_list() throws URISyntaxException {
+		Map<String, Set<String>> result = getClusterClient().getNodes();
+		Assert.assertNotNull(result);
+		Assert.assertEquals(1, result.size());
+	}
+
+	@Test
+	public void test25_active_random() throws URISyntaxException {
+		for (String service : SERVICES) {
+			String result = getClusterClient().getActiveNodeRandom(service);
+			Assert.assertNotNull(result);
+			Assert.assertEquals(CLIENT_ADDRESS, result);
+		}
+	}
+
+	@Test
+	public void test30_check_unregister() throws URISyntaxException {
 		Response response = getClusterClient().unregister(CLIENT_ADDRESS);
 		Assert.assertNotNull(response);
 		Assert.assertEquals(200, response.getStatus());
 	}
 
 	@Test
-	public void test22_list_is_empty() throws URISyntaxException {
+	public void test32_list_is_empty() throws URISyntaxException {
 		ClusterStatusJson result = getClusterClient().list();
 		Assert.assertNotNull(result);
 		Assert.assertNotNull(result.services);

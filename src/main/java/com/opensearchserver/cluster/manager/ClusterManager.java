@@ -55,6 +55,10 @@ public class ClusterManager {
 			throw new IOException("Already loaded");
 		try {
 			INSTANCE = new ClusterManager(server, directory);
+			if (INSTANCE.isMaster()) {
+				INSTANCE.loadNodesFromOtherMaster();
+				INSTANCE.startMonitoringThread();
+			}
 		} catch (URISyntaxException e) {
 			throw new IOException(e);
 		}
@@ -73,7 +77,9 @@ public class ClusterManager {
 
 	private final String myAddress;
 
-	private final ClusterMonitoringThread clusterMonitoringThread;
+	private ClusterMonitoringThread clusterMonitoringThread = null;
+
+	private Thread clusterNodeShutdownThread = null;
 
 	private final boolean isMaster;
 
@@ -119,14 +125,35 @@ public class ClusterManager {
 		this.isMaster = isMaster;
 		if (!isMaster) {
 			clusterNodeMap = null;
-			clusterMonitoringThread = null;
 			isMaster = false;
 			return;
 		}
 
 		// We load the cluster node map
 		clusterNodeMap = new ClusterNodeMap();
+	}
 
+	private void loadNodesFromOtherMaster() {
+		// Let's try to load the other nodes from another master
+		for (String master : clusterMasterSet) {
+			if (master == myAddress)
+				continue;
+			try {
+				logger.warn("Get node list from  " + master);
+				Map<String, Set<String>> nodesMap = new ClusterClient(master,
+						60000).getNodes();
+				if (nodesMap == null)
+					continue;
+				for (Map.Entry<String, Set<String>> entry : nodesMap.entrySet())
+					upsertNode(entry.getKey(), entry.getValue());
+				break;
+			} catch (Exception e) {
+				logger.warn("Unable to load the node list from " + master, e);
+			}
+		}
+	}
+
+	private void startMonitoringThread() {
 		// All is set, let's start the monitoring
 		clusterMonitoringThread = new ClusterMonitoringThread(60);
 	}
@@ -190,7 +217,7 @@ public class ClusterManager {
 		Cache cache = getNodeSetCache(service);
 		if (cache == null)
 			return ClusterServiceStatusJson.EMPTY_LIST;
-		return buildList(cache.inactiveArray);
+		return buildList(cache.activeArray);
 	}
 
 	/**
@@ -236,8 +263,35 @@ public class ClusterManager {
 			return;
 		for (String master : clusterMasterSet) {
 			logger.info("Registering as a service to " + master);
-			new ClusterClient(master, 60000)
-					.register(new ClusterNodeRegisterJson(myAddress, services));
+			try {
+				new ClusterClient(master, 60000)
+						.register(new ClusterNodeRegisterJson(myAddress,
+								services));
+			} catch (Exception e) {
+				logger.warn(e.getMessage(), e);
+			}
+		}
+		if (clusterNodeShutdownThread == null) {
+			clusterNodeShutdownThread = new Thread() {
+				@Override
+				public void run() {
+					try {
+						unregisterMe();
+					} catch (Exception e) {
+						logger.warn(e.getMessage(), e);
+					}
+				}
+			};
+			Runtime.getRuntime().addShutdownHook(clusterNodeShutdownThread);
+		}
+	}
+
+	public void unregisterMe() throws URISyntaxException {
+		if (clusterMasterSet == null)
+			return;
+		for (String master : clusterMasterSet) {
+			logger.info("Unregistering to " + master);
+			new ClusterClient(master, 60000).unregister(myAddress);
 		}
 	}
 

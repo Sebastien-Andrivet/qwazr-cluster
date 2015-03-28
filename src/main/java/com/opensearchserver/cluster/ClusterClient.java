@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -28,6 +30,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.opensearchserver.cluster.service.ClusterNodeRegisterJson;
 import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
 import com.opensearchserver.cluster.service.ClusterServiceInterface;
@@ -52,6 +55,21 @@ public class ClusterClient extends JsonClientAbstract implements
 			Request request = Request.Get(uriBuilder.build());
 			return execute(request, null, msTimeOut, ClusterStatusJson.class,
 					200);
+		} catch (URISyntaxException | IOException e) {
+			throw new JsonClientException(e);
+		}
+	}
+
+	public final static TypeReference<Map<String, Set<String>>> MapStringSetStringTypeRef = new TypeReference<Map<String, Set<String>>>() {
+	};
+
+	@Override
+	public Map<String, Set<String>> getNodes() {
+		try {
+			URIBuilder uriBuilder = getBaseUrl("/cluster/nodes");
+			Request request = Request.Get(uriBuilder.build());
+			return (Map<String, Set<String>>) execute(request, null, msTimeOut,
+					MapStringSetStringTypeRef, 200);
 		} catch (URISyntaxException | IOException e) {
 			throw new JsonClientException(e);
 		}
@@ -92,8 +110,8 @@ public class ClusterClient extends JsonClientAbstract implements
 	@Override
 	public ClusterServiceStatusJson getServiceStatus(String service_name) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/cluster/services/"
-					+ service_name);
+			URIBuilder uriBuilder = getBaseUrl("/cluster/services/",
+					service_name);
 			Request request = Request.Get(uriBuilder.build());
 			return execute(request, null, msTimeOut,
 					ClusterServiceStatusJson.class, 200);
@@ -105,8 +123,8 @@ public class ClusterClient extends JsonClientAbstract implements
 	@Override
 	public List<String> getActiveNodes(String service_name) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/cluster/services/active"
-					+ service_name);
+			URIBuilder uriBuilder = getBaseUrl("/cluster/services/",
+					service_name, "/active");
 			Request request = Request.Get(uriBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			HttpUtils.checkStatusCodes(response, 200);
@@ -121,8 +139,8 @@ public class ClusterClient extends JsonClientAbstract implements
 	@Override
 	public String getActiveNodeRandom(String service_name) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/cluster/services/active/random"
-					+ service_name);
+			URIBuilder uriBuilder = getBaseUrl("/cluster/services/",
+					service_name, "/active/random");
 			Request request = Request.Get(uriBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			HttpUtils.checkStatusCodes(response, 200);
@@ -132,4 +150,5 @@ public class ClusterClient extends JsonClientAbstract implements
 			throw new JsonClientException(e);
 		}
 	}
+
 }

@@ -16,6 +16,8 @@
 package com.opensearchserver.cluster.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -40,6 +42,11 @@ public interface ClusterServiceInterface {
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
 	public ClusterStatusJson list();
+
+	@GET
+	@Path("/nodes")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Map<String, Set<String>> getNodes();
 
 	@PUT
 	@POST
