@@ -15,9 +15,7 @@
  */
 package com.opensearchserver.cluster.manager;
 
-import java.util.LinkedHashSet;
-
-import org.apache.commons.lang3.RandomUtils;
+import java.util.HashMap;
 
 import com.opensearchserver.utils.LockUtils.ReadWriteLock;
 
@@ -25,18 +23,28 @@ public class ClusterNodeSet {
 
 	private final ReadWriteLock readWriteLock = new ReadWriteLock();
 
-	private volatile ClusterNode[] activeCacheArray;
-	private final LinkedHashSet<ClusterNode> activeSet;
-	private final LinkedHashSet<ClusterNode> inactiveSet;
+	private final HashMap<String, ClusterNode> activeMap;
+	private final HashMap<String, ClusterNode> inactiveMap;
 
-	ClusterNodeSet() {
-		activeCacheArray = null;
-		activeSet = new LinkedHashSet<ClusterNode>();
-		inactiveSet = new LinkedHashSet<ClusterNode>();
+	class Cache {
+
+		final ClusterNode[] activeArray;
+		final ClusterNode[] inactiveArray;
+
+		private Cache() {
+			this.activeArray = activeMap.values().toArray(
+					new ClusterNode[activeMap.size()]);
+			this.inactiveArray = inactiveMap.values().toArray(
+					new ClusterNode[inactiveMap.size()]);
+		}
 	}
 
-	private void buildActiveCacheArray() {
-		activeCacheArray = activeSet.toArray(new ClusterNode[activeSet.size()]);
+	private Cache cache;
+
+	ClusterNodeSet() {
+		cache = null;
+		activeMap = new HashMap<String, ClusterNode>();
+		inactiveMap = new HashMap<String, ClusterNode>();
 	}
 
 	/**
@@ -45,20 +53,20 @@ public class ClusterNodeSet {
 	 * @param node
 	 *            The cluster not to insert
 	 */
-	void active(ClusterNode node) {
+	private void active(ClusterNode node) {
 		// We check first if it is not already present in the right list
 		readWriteLock.r.lock();
 		try {
-			if (activeSet.contains(node))
+			if (activeMap.containsKey(node.address))
 				return;
 		} finally {
 			readWriteLock.r.unlock();
 		}
 		readWriteLock.w.lock();
 		try {
-			inactiveSet.remove(node);
-			activeSet.add(node);
-			buildActiveCacheArray();
+			inactiveMap.remove(node.address);
+			activeMap.put(node.address, node);
+			cache = new Cache();
 		} finally {
 			readWriteLock.w.unlock();
 		}
@@ -70,20 +78,20 @@ public class ClusterNodeSet {
 	 * @param node
 	 *            The cluster not to insert
 	 */
-	void inactive(ClusterNode node) {
+	private void inactive(ClusterNode node) {
 		// We check first if it is not already present in the right list
 		readWriteLock.r.lock();
 		try {
-			if (inactiveSet.contains(node))
+			if (inactiveMap.containsKey(node.address))
 				return;
 		} finally {
 			readWriteLock.r.unlock();
 		}
 		readWriteLock.w.lock();
 		try {
-			activeSet.remove(node);
-			inactiveSet.add(node);
-			buildActiveCacheArray();
+			activeMap.remove(node.address);
+			inactiveMap.put(node.address, node);
+			cache = new Cache();
 		} finally {
 			readWriteLock.w.unlock();
 		}
@@ -108,22 +116,12 @@ public class ClusterNodeSet {
 	void remove(ClusterNode node) {
 		readWriteLock.w.lock();
 		try {
-			activeSet.remove(node);
-			inactiveSet.remove(node);
-			buildActiveCacheArray();
+			activeMap.remove(node.address);
+			inactiveMap.remove(node.address);
+			cache = new Cache();
 		} finally {
 			readWriteLock.w.unlock();
 		}
-	}
-
-	/**
-	 * @return a clusterNode choose randomly
-	 */
-	ClusterNode getRandom() {
-		ClusterNode[] aa = activeCacheArray;
-		if (aa == null)
-			return null;
-		return aa[RandomUtils.nextInt(0, aa.length)];
 	}
 
 	/**
@@ -132,10 +130,17 @@ public class ClusterNodeSet {
 	boolean isEmpty() {
 		readWriteLock.r.lock();
 		try {
-			return activeSet.isEmpty() && inactiveSet.isEmpty();
+			return activeMap.isEmpty() && inactiveMap.isEmpty();
 		} finally {
 			readWriteLock.r.unlock();
 		}
+	}
+
+	/**
+	 * @return a cached list of active nodes and inactive nodes
+	 */
+	Cache getCache() {
+		return cache;
 	}
 
 }

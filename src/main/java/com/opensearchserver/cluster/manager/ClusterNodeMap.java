@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import com.opensearchserver.cluster.service.ClusterServicesStatusJson;
 import com.opensearchserver.utils.LockUtils.ReadWriteLock;
 
 public class ClusterNodeMap {
@@ -244,22 +243,8 @@ public class ClusterNodeMap {
 		}
 	}
 
-	void populateInactive(String service, List<String> nodeNameList) {
-		// TODO Auto-generated method stub
-
+	HashMap<String, ClusterNodeSet> getServicesMap() {
+		return cacheNodesByServiceMap;
 	}
 
-	void populateActive(String service, List<String> nodeNameList) {
-		// TODO Auto-generated method stub
-
-	}
-
-	String getActiveRandom(String service) {
-		return null;
-	}
-
-	public ClusterServicesStatusJson getServiceStatus() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

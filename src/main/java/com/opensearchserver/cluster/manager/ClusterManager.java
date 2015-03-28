@@ -19,16 +19,26 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.opensearchserver.cluster.service.ClusterServicesStatusJson;
+import com.opensearchserver.cluster.ClusterClient;
+import com.opensearchserver.cluster.manager.ClusterNodeSet.Cache;
+import com.opensearchserver.cluster.service.ClusterNodeRegisterJson;
+import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
+import com.opensearchserver.cluster.service.ClusterServiceStatusJson;
+import com.opensearchserver.cluster.service.ClusterServiceStatusJson.StatusEnum;
 import com.opensearchserver.utils.json.JsonApplicationException;
 import com.opensearchserver.utils.server.AbstractServer;
 
@@ -83,16 +93,16 @@ public class ClusterManager {
 				.newInstance(clusterConfigurationFile);
 
 		// No configuration file ? Okay, we are a simple node
-		if (clusterConfiguration == null)
-			throw new IOException("The configuration file is missing: "
-					+ CLUSTER_CONFIGURATION_NAME);
-
-		// Load the configuration file
-		if (clusterConfiguration.masters == null
-				|| clusterConfiguration.masters.isEmpty())
-			throw new IOException(
-					"No masters configured in the configuration file: "
-							+ CLUSTER_CONFIGURATION_NAME);
+		if (clusterConfiguration == null
+				|| clusterConfiguration.masters == null
+				|| clusterConfiguration.masters.isEmpty()) {
+			clusterMasterSet = null;
+			clusterNodeMap = null;
+			clusterMonitoringThread = null;
+			isMaster = false;
+			logger.info("No cluster configuration. This node is not part of a cluster.");
+			return;
+		}
 
 		// Build the master list and check if I am a master
 		boolean isMaster = false;
@@ -153,23 +163,96 @@ public class ClusterManager {
 		return isMaster;
 	}
 
-	public List<String> getInactiveNodes(String service) {
+	private List<String> buildList(ClusterNode[] nodes) {
+		if (nodes == null)
+			return ClusterServiceStatusJson.EMPTY_LIST;
 		List<String> nodeNameList = new ArrayList<String>();
-		checkMaster().populateInactive(service, nodeNameList);
+		for (ClusterNode node : nodes)
+			nodeNameList.add(node.address);
 		return nodeNameList;
+	}
+
+	private Cache getNodeSetCache(String service) {
+		ClusterNodeSet nodeSet = checkMaster().getNodeSet(service);
+		if (nodeSet == null)
+			return null;
+		return nodeSet.getCache();
+	}
+
+	public List<String> getInactiveNodes(String service) {
+		Cache cache = getNodeSetCache(service);
+		if (cache == null)
+			return ClusterServiceStatusJson.EMPTY_LIST;
+		return buildList(cache.activeArray);
 	}
 
 	public List<String> getActiveNodes(String service) {
-		List<String> nodeNameList = new ArrayList<String>();
-		checkMaster().populateActive(service, nodeNameList);
-		return nodeNameList;
+		Cache cache = getNodeSetCache(service);
+		if (cache == null)
+			return ClusterServiceStatusJson.EMPTY_LIST;
+		return buildList(cache.inactiveArray);
 	}
 
+	/**
+	 * @param service
+	 *            the name of the service
+	 * @return a randomly choosen node
+	 */
 	public String getActiveNodeRandom(String service) {
-		return checkMaster().getActiveRandom(service);
+		Cache cache = getNodeSetCache(service);
+		if (cache == null)
+			return null;
+		ClusterNode[] aa = cache.activeArray;
+		if (aa == null)
+			return null;
+		return aa[RandomUtils.nextInt(0, aa.length)].address;
 	}
 
-	public ClusterServicesStatusJson getServicesStatus() {
-		return checkMaster().getServiceStatus();
+	/**
+	 * Build a status of the given service. The list of active nodes and the
+	 * list of inactive nodes with their latest status.
+	 * 
+	 * @param service
+	 *            the name of the service
+	 * @return the status of the service
+	 */
+	public ClusterServiceStatusJson getServiceStatus(String service) {
+		Cache cache = getNodeSetCache(service);
+		if (cache == null)
+			return new ClusterServiceStatusJson();
+		List<String> activeList = buildList(cache.activeArray);
+		if (cache.inactiveArray == null)
+			return new ClusterServiceStatusJson(activeList,
+					ClusterServiceStatusJson.EMPTY_MAP);
+		Map<String, ClusterNodeStatusJson> inactiveMap = new LinkedHashMap<String, ClusterNodeStatusJson>();
+		for (ClusterNode node : cache.inactiveArray)
+			inactiveMap.put(node.address, node.getStatus());
+		return new ClusterServiceStatusJson(activeList, inactiveMap);
+	}
+
+	public void registerMe(String... services) throws URISyntaxException {
+		if (clusterMasterSet == null || services == null
+				|| services.length == 0)
+			return;
+		for (String master : clusterMasterSet) {
+			logger.info("Registering as a service to " + master);
+			new ClusterClient(master, 60000)
+					.register(new ClusterNodeRegisterJson(myAddress, services));
+		}
+	}
+
+	public TreeMap<String, StatusEnum> getServicesStatus() {
+		HashMap<String, ClusterNodeSet> servicesMap = clusterNodeMap
+				.getServicesMap();
+		if (servicesMap == null)
+			return null;
+		TreeMap<String, StatusEnum> servicesStatusMap = new TreeMap<String, StatusEnum>();
+		for (Map.Entry<String, ClusterNodeSet> entry : servicesMap.entrySet()) {
+			Cache cache = entry.getValue().getCache();
+			StatusEnum status = ClusterServiceStatusJson.findStatus(
+					cache.activeArray.length, cache.inactiveArray.length);
+			servicesStatusMap.put(entry.getKey(), status);
+		}
+		return servicesStatusMap;
 	}
 }

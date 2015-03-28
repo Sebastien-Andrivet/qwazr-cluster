@@ -29,12 +29,11 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 
 	@Override
 	public ClusterStatusJson list() {
-		List<ClusterNode> clusterNodeList = ClusterManager.INSTANCE
-				.getNodeList();
+		ClusterManager manager = ClusterManager.INSTANCE;
+		List<ClusterNode> clusterNodeList = manager.getNodeList();
 		if (clusterNodeList == null)
 			return null;
-		ClusterStatusJson clusterStatus = new ClusterStatusJson(
-				ClusterManager.INSTANCE);
+		ClusterStatusJson clusterStatus = new ClusterStatusJson(manager);
 		for (ClusterNode clusterNode : clusterNodeList)
 			clusterStatus.addNodeStatus(clusterNode);
 		return clusterStatus;
@@ -76,14 +75,6 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 	}
 
 	@Override
-	public List<String> getInactiveNodes(String service_name) {
-		if (service_name == null)
-			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
-		ClusterManager manager = ClusterManager.INSTANCE;
-		return manager.getInactiveNodes(service_name);
-	}
-
-	@Override
 	public List<String> getActiveNodes(String service_name) {
 		if (service_name == null)
 			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
@@ -100,8 +91,8 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 	}
 
 	@Override
-	public ClusterServicesStatusJson getServices() {
+	public ClusterServiceStatusJson getServiceStatus(String service_name) {
 		ClusterManager manager = ClusterManager.INSTANCE;
-		return manager.getServicesStatus();
+		return manager.getServiceStatus(service_name);
 	}
 }

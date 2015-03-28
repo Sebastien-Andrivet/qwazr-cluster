@@ -57,26 +57,21 @@ public interface ClusterServiceInterface {
 	public Response check(@HeaderParam(HEADER_CHECK_NAME) String checkValue);
 
 	@GET
-	@Path("/service")
+	@Path("/services/{service_name}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public ClusterServicesStatusJson getServices();
+	public ClusterServiceStatusJson getServiceStatus(
+			@PathParam("service_name") String service_name);
 
 	@GET
-	@Path("/service/{service_name}/active")
+	@Path("/services/{service_name}/active")
 	@Produces(MediaType.TEXT_PLAIN)
 	public List<String> getActiveNodes(
 			@PathParam("service_name") String service_name);
 
 	@GET
-	@Path("/service/{service_name}/active/random")
+	@Path("/services/{service_name}/active/random")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getActiveNodeRandom(
-			@PathParam("service_name") String service_name);
-
-	@GET
-	@Path("/service/{service_name}/unactive")
-	@Produces(MediaType.TEXT_PLAIN)
-	public List<String> getInactiveNodes(
 			@PathParam("service_name") String service_name);
 
 }

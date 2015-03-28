@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.logging.Logger;
 
+import javax.ws.rs.core.Response;
+
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -29,6 +31,8 @@ import com.opensearchserver.cluster.ClusterClient;
 import com.opensearchserver.cluster.ClusterServer;
 import com.opensearchserver.cluster.service.ClusterNodeRegisterJson;
 import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
+import com.opensearchserver.cluster.service.ClusterServiceStatusJson;
+import com.opensearchserver.cluster.service.ClusterServiceStatusJson.StatusEnum;
 import com.opensearchserver.cluster.service.ClusterStatusJson;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -74,5 +78,75 @@ public class AllTest {
 				new ClusterNodeRegisterJson(CLIENT_ADDRESS, serviceSet));
 		Assert.assertNotNull(result);
 		Assert.assertNull(result.error, result.error);
+	}
+
+	@Test
+	public void test12_list_non_empty() throws URISyntaxException {
+		ClusterStatusJson result = getClusterClient().list();
+		Assert.assertNotNull(result);
+		Assert.assertNotNull(result.services);
+		Assert.assertEquals(SERVICES.length, result.services.size());
+		Assert.assertNotNull(result.active_nodes);
+		Assert.assertNotNull(result.inactive_nodes);
+		Assert.assertTrue(result.active_nodes.size() == 1
+				|| result.inactive_nodes.size() == 1);
+	}
+
+	/**
+	 * We wait 30 seconds until the service is visible as active.
+	 * 
+	 * @throws URISyntaxException
+	 * @throws InterruptedException
+	 */
+	@Test
+	public void test15_check_service_activation() throws URISyntaxException,
+			InterruptedException {
+		int count = 0;
+		while (count++ < 15) {
+			int activated_count = 0;
+			for (String service : SERVICES) {
+				logger.info("Check service activation: " + count);
+				ClusterServiceStatusJson result = getClusterClient()
+						.getServiceStatus(service);
+				Assert.assertNotNull(result);
+				Assert.assertTrue(result.inactive_count == 1
+						|| result.active_count == 1);
+				Assert.assertNotNull(result.status);
+				if (result.active_count == 1) {
+					Assert.assertNotNull(result.active);
+					Assert.assertEquals(1, result.active.size());
+					Assert.assertEquals(StatusEnum.ok, result.status);
+					activated_count++;
+				} else {
+					Assert.assertNotNull(result.inactive);
+					Assert.assertEquals(1, result.inactive.size());
+					Assert.assertEquals(StatusEnum.failure, result.status);
+				}
+			}
+			if (activated_count == SERVICES.length) {
+				logger.info("Check service activation succeed");
+				return;
+			}
+			Thread.sleep(2000);
+		}
+	}
+
+	@Test
+	public void test20_check_unregister() throws URISyntaxException {
+		Response response = getClusterClient().unregister(CLIENT_ADDRESS);
+		Assert.assertNotNull(response);
+		Assert.assertEquals(200, response.getStatus());
+	}
+
+	@Test
+	public void test22_list_is_empty() throws URISyntaxException {
+		ClusterStatusJson result = getClusterClient().list();
+		Assert.assertNotNull(result);
+		Assert.assertNotNull(result.services);
+		Assert.assertNotNull(result.active_nodes);
+		Assert.assertNotNull(result.inactive_nodes);
+		Assert.assertEquals(result.services.size(), 0);
+		Assert.assertEquals(result.active_nodes.size(), 0);
+		Assert.assertEquals(result.inactive_nodes.size(), 0);
 	}
 }

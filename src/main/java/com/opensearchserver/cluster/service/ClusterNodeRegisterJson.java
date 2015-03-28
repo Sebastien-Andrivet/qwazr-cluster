@@ -15,6 +15,8 @@
  */
 package com.opensearchserver.cluster.service;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,6 +36,11 @@ public class ClusterNodeRegisterJson {
 	public ClusterNodeRegisterJson(String address, Set<String> services) {
 		this.address = address;
 		this.services = services;
+	}
+
+	public ClusterNodeRegisterJson(String address, String... services) {
+		this.address = address;
+		this.services = new HashSet<String>(Arrays.asList(services));
 	}
 
 }
