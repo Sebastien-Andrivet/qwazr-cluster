@@ -12,12 +12,12 @@
 	<url>http://www.opensearchserver.com</url>
 	<licenses>
 		<license>
-			<name>General Public License, Version 3.0</name>
-			<url>http://www.gnu.org/licenses/gpl.html</url>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	<version>0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<organization>
 		<name>OpenSearchServer Inc.</name>
 		<url>http://www.opensearchserver.com</url>
@@ -31,7 +31,7 @@
 		<url>https://github.com/opensearchserver/oss-cluster/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<url>http://www.open-search-server.com/jenkins</url>
+		<url>http://www.opensearchserver.com/jenkins</url>
 	</ciManagement>
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
@@ -41,9 +41,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<resteasy.version>3.0.10.Final</resteasy.version>
+		<resteasy.version>3.0.11.Final</resteasy.version>
 		<undertow.version>1.1.3.Final</undertow.version>
-		<skipTests>true</skipTests>
+		<poi.version>3.11</poi.version>
 		<httpclient.version>4.4</httpclient.version>
 		<jackson.version>2.5.1</jackson.version>
 	</properties>
@@ -150,6 +150,11 @@
 			<version>${jackson.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>net.java.dev.jna</groupId>
 			<artifactId>jna</artifactId>
 			<version>4.1.0</version>
@@ -244,15 +249,13 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.18.1</version>
 				<configuration>
-					<skipTests>${skipTests}</skipTests>
+					<properties>
+						<property>
+							<name>listener</name>
+							<value>com.opensearchserver.cluster.test.ExecutionListener</value>
+						</property>
+					</properties>
 				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>org.apache.maven.surefire</groupId>
-						<artifactId>surefire-junit47</artifactId>
-						<version>2.18.1</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -278,6 +281,147 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>jdeb</artifactId>
+				<groupId>org.vafer</groupId>
+				<version>1.4</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>jdeb</goal>
+						</goals>
+						<configuration>
+							<deb>${project.build.directory}/${project.build.finalName}.deb</deb>
+							<dataSet>
+								<data>
+									<src>${project.build.directory}/${project.build.finalName}-exec.jar</src>
+									<dst>oss-cluster.jar</dst>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>/usr/share/opensearchserver</prefix>
+										<user>daemon</user>
+										<group>daemon</group>
+									</mapper>
+								</data>
+								<data>
+									<src>${basedir}/src/deb/data/copyright</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>/usr/share/doc/oss-cluster</prefix>
+									</mapper>
+								</data>
+								<data>
+									<src>${basedir}/src/deb/etc/oss-cluster</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>/etc/opensearchserver</prefix>
+									</mapper>
+								</data>
+								<data>
+									<src>${basedir}/cluster.yaml</src>
+									<type>file</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>/var/lib/opensearchserver</prefix>
+									</mapper>
+								</data>
+								<data>
+									<src>${basedir}/src/deb/init.d</src>
+									<type>directory</type>
+									<mapper>
+										<type>perm</type>
+										<prefix>/etc/init.d</prefix>
+										<filemode>755</filemode>
+									</mapper>
+								</data>
+								<data>
+									<type>template</type>
+									<paths>
+										<path>/var/log/opensearchserver/${project.artifactId}</path>
+										<path>/var/run/${project.artifactId}</path>
+									</paths>
+									<mapper>
+										<type>perm</type>
+										<user>opensearchserver</user>
+										<group>daemon</group>
+									</mapper>
+								</data>
+							</dataSet>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>rpm-maven-plugin</artifactId>
+				<version>2.1.2</version>
+				<executions>
+					<execution>
+						<id>generate-rpm</id>
+						<goals>
+							<goal>rpm</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<license>Apache 2.0 (c) 2014, OpenSearchServer Inc.</license>
+					<group>Application/Internet</group>
+					<packager>OpenSearchServer</packager>
+					<version>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}</version>
+					<prefix>/usr/local</prefix>
+					<mappings>
+						<mapping>
+							<directory>/usr/share/opensearchserver</directory>
+							<username>opensearchserver</username>
+							<groupname>daemon</groupname>
+							<sources>
+								<source>
+									<location>${project.build.directory}/${project.build.finalName}-exec.jar</location>
+									<destination>oss-cluster.jar</destination>
+								</source>
+								<source>
+									<location>src/deb/init.d/oss-cluster</location>
+								</source>
+							</sources>
+						</mapping>
+						<mapping>
+							<directory>/etc/opensearchserver</directory>
+							<configuration>true</configuration>
+							<sources>
+								<source>
+									<location>src/deb/etc/oss-cluster</location>
+								</source>
+							</sources>
+						</mapping>
+						<mapping>
+							<directory>/var/log/opensearchserver/oss-cluster</directory>
+							<username>opensearchserver</username>
+						</mapping>
+						<mapping>
+							<directory>/var/lib/opensearchserver</directory>
+							<username>opensearchserver</username>
+							<sources>
+								<source>
+									<location>cluster.yaml</location>
+								</source>
+							</sources>
+						</mapping>
+					</mappings>
+					<requires>
+						<require>java &gt;= 1.8.0</require>
+					</requires>
+					<preinstallScriptlet>
+						<scriptFile>src/rpm/preinst</scriptFile>
+					</preinstallScriptlet>
+					<postinstallScriptlet>
+						<scriptFile>src/rpm/postinst</scriptFile>
+					</postinstallScriptlet>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.jasig.maven</groupId>

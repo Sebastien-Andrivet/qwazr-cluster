@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [ /etc/init.d/oss-cluster ]; then
+	if which invoke-rc.d >/dev/null 2>&1; then
+		invoke-rc.d oss-cluster stop
+	else
+		/etc/init.d/oss-cluster stop
+	fi
+fi

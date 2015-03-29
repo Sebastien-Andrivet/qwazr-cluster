@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opensearchserver.cluster;
+package com.opensearchserver.cluster.manager;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,17 +30,18 @@ import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.opensearchserver.cluster.json.ClusterNodeStatusJson;
-import com.opensearchserver.cluster.json.ClusterNodeStatusJson.State;
+import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
+import com.opensearchserver.cluster.service.ClusterNodeStatusJson.State;
+import com.opensearchserver.cluster.service.ClusterServiceInterface;
 
 public class ClusterNode implements FutureCallback<HttpResponse> {
 
 	private static final Logger logger = LoggerFactory
 			.getLogger(ClusterNode.class);
 
-	public final String name;
+	public final String address;
 
-	public final List<String> services;
+	public Set<String> services;
 
 	final URI baseURI;
 
@@ -59,13 +60,12 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 	 * @param hostname
 	 *            The hostname of the node
 	 * @param services
-	 *            The list of services provided by this node
+	 *            The set of services provided by this node
 	 * @throws URISyntaxException
 	 */
-	ClusterNode(String hostname, List<String> services)
-			throws URISyntaxException {
-		this.baseURI = toUri(hostname, null);
-		this.name = baseURI.toString().intern();
+	ClusterNode(String address, Set<String> services) throws URISyntaxException {
+		this.baseURI = toUri(address, null);
+		this.address = baseURI.toString().intern();
 		this.services = services;
 		checkURI = new URI(baseURI.getScheme(), null, baseURI.getHost(),
 				baseURI.getPort(), "/cluster", null, null);
@@ -82,11 +82,13 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 	}
 
 	private void setStatus(long time, State state, Long latency, String error) {
-		this.clusterNodeStatus = new ClusterNodeStatusJson(new Date(time),
-				state, latency, error);
+		this.clusterNodeStatus = new ClusterNodeStatusJson(time == 0 ? null
+				: new Date(time), state, latency, error,
+				clusterNodeStatus == null ? null
+						: clusterNodeStatus.error_since);
 		if (error != null)
 			logger.warn(error);
-
+		ClusterManager.INSTANCE.updateNodeStatus(this);
 	}
 
 	void startCheck(CloseableHttpAsyncClient httpclient) {
@@ -148,7 +150,28 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 		logger.warn("Cluster node cancelled " + checkURI.toString());
 	}
 
-	public static URI toUri(String hostname, Integer port)
+	/**
+	 * Check the latest known status of the node.
+	 * 
+	 * @return true if the node is online
+	 */
+	public boolean isActive() {
+		ClusterNodeStatusJson cns = clusterNodeStatus;
+		return cns != null && cns.online;
+	}
+
+	/**
+	 * Update the service list
+	 * 
+	 * @param services
+	 *            A list of service name
+	 */
+	public void setServices(Set<String> services) {
+		this.services = services;
+		logger.info("Update services for " + address);
+	}
+
+	private static URI toUri(String hostname, Integer port)
 			throws URISyntaxException {
 		if (!hostname.contains("//"))
 			hostname = "//" + hostname;
@@ -159,6 +182,22 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 			port = ClusterManager.INSTANCE.port;
 		return new URI(StringUtils.isEmpty(u.getScheme()) ? "http"
 				: u.getScheme(), null, u.getHost(), port, null, null, null);
+	}
+
+	/**
+	 * Format an address which can be used in hashset or hashmap
+	 * 
+	 * @param hostname
+	 *            the hostname
+	 * @param port
+	 *            the optional port
+	 * @return the address usable as a key
+	 * @throws URISyntaxException
+	 *             thrown if the hostname format is not valid
+	 */
+	public static String toAddress(String hostname, Integer port)
+			throws URISyntaxException {
+		return toUri(hostname, port).toString().intern();
 	}
 
 }

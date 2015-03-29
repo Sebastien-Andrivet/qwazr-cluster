@@ -13,33 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opensearchserver.cluster.json;
+package com.opensearchserver.cluster.service;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.opensearchserver.utils.json.JsonMapper;
 
 @JsonInclude(Include.NON_EMPTY)
-public class ClusterJson {
+public class ClusterNodeRegisterJson {
 
-	public final Map<String, List<String>> nodes;
-	public final Map<String, List<String>> masters;
+	public final String address;
+	public final Set<String> services;
 
-	public ClusterJson() {
-		nodes = null;
-		masters = null;
+	public ClusterNodeRegisterJson() {
+		address = null;
+		services = null;
 	}
 
-	public static ClusterJson newInstance(File clusterJsonFile)
-			throws IOException {
-		if (!clusterJsonFile.exists() || clusterJsonFile.length() == 0)
-			return null;
-		return JsonMapper.MAPPER.readValue(clusterJsonFile, ClusterJson.class);
+	public ClusterNodeRegisterJson(String address, Set<String> services) {
+		this.address = address;
+		this.services = services;
+	}
+
+	public ClusterNodeRegisterJson(String address, String... services) {
+		this.address = address;
+		this.services = new HashSet<String>(Arrays.asList(services));
 	}
 
 }

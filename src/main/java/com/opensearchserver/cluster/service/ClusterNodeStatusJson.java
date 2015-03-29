@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opensearchserver.cluster.json;
+package com.opensearchserver.cluster.service;
 
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_NULL)
 public class ClusterNodeStatusJson {
 
 	public static enum State {
@@ -48,6 +48,8 @@ public class ClusterNodeStatusJson {
 
 	final public boolean online;
 
+	final public Date error_since;
+
 	final public Date latest_check;
 
 	final public State state;
@@ -56,13 +58,26 @@ public class ClusterNodeStatusJson {
 
 	final public String error;
 
+	public ClusterNodeStatusJson() {
+		online = false;
+		error_since = null;
+		latest_check = null;
+		state = null;
+		latency = null;
+		error = null;
+	}
+
 	public ClusterNodeStatusJson(Date latest_check, State state, Long latency,
-			String error) {
+			String error, Date error_since) {
 		this.latest_check = latest_check;
 		this.state = state;
 		this.latency = latency;
 		this.error = error;
 		this.online = state != null && state == State.online;
+		if (!this.online) {
+			this.error_since = error_since == null ? latest_check : error_since;
+		} else
+			this.error_since = null;
 	}
 
 }

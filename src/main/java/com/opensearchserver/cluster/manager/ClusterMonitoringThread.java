@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opensearchserver.cluster;
+package com.opensearchserver.cluster.manager;
 
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 
-import com.opensearchserver.utils.ThreadUtils;
+import com.opensearchserver.utils.threads.PeriodicThread;
+import com.opensearchserver.utils.threads.ThreadUtils;
 
-public class ClusterMonitoringThread extends Thread {
-
-	private final int monitoring_period;
+public class ClusterMonitoringThread extends PeriodicThread {
 
 	private final RequestConfig requestConfig;
 	private final CloseableHttpAsyncClient httpclient;
 
 	ClusterMonitoringThread(int monitoring_period_seconds) {
-		super("ClusterMonitoringThread");
+		super("Nodes monitoring", monitoring_period_seconds);
 		setDaemon(true);
-		this.monitoring_period = monitoring_period_seconds * 1000;
 		requestConfig = RequestConfig.custom()
 				.setSocketTimeout(monitoring_period)
 				.setConnectTimeout(monitoring_period).build();
@@ -42,20 +40,14 @@ public class ClusterMonitoringThread extends Thread {
 	}
 
 	@Override
+	public void runner() {
+		for (ClusterNode clusterNode : ClusterManager.INSTANCE.getNodeList())
+			clusterNode.startCheck(httpclient);
+	}
+
+	@Override
 	public void run() {
-		// initial time wait
 		ThreadUtils.sleepMs(10000);
-		for (;;) {
-			System.out.println("ClusterThread.run");
-			long start = System.currentTimeMillis();
-			for (ClusterNode clusterNode : ClusterManager.INSTANCE
-					.getClusterNodeList())
-				clusterNode.startCheck(httpclient);
-			long sleep = monitoring_period
-					- (System.currentTimeMillis() - start);
-			System.out.println("Sleep " + sleep);
-			if (sleep > 0)
-				ThreadUtils.sleepMs(monitoring_period);
-		}
+		super.run();
 	}
 }
