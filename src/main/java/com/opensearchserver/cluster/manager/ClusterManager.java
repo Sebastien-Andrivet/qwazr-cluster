@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -277,7 +278,13 @@ public class ClusterManager {
 		return new ClusterServiceStatusJson(activeList, inactiveMap);
 	}
 
-	public void registerMe(String... services) throws URISyntaxException {
+	public void registerMe(Collection<String> services) {
+		if (services == null || services.isEmpty())
+			return;
+		registerMe(services.toArray(new String[services.size()]));
+	}
+
+	public void registerMe(String... services) {
 		if (clusterMasterSet == null || services == null
 				|| services.length == 0)
 			return;
