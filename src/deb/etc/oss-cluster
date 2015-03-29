@@ -1,0 +1,6 @@
+# The TCP port used by the server
+SERVER_PORT=9099
+
+
+# Any JAVA option. Often used to allocate more memory usage.
+#JAVA_OPTS="-Xms1G -Xmx1G"

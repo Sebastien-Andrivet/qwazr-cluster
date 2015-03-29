@@ -18,6 +18,7 @@ package com.opensearchserver.cluster.test;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -104,8 +105,9 @@ public class AllTest {
 	public void test15_check_service_activation() throws URISyntaxException,
 			InterruptedException {
 		int count = 0;
-		while (count++ < 15) {
-			int activated_count = 0;
+		int activated_count = 0;
+		while (count++ < 20) {
+			activated_count = 0;
 			for (String service : SERVICES) {
 				logger.info("Check service activation: " + count);
 				ClusterServiceStatusJson result = getClusterClient()
@@ -127,10 +129,11 @@ public class AllTest {
 			}
 			if (activated_count == SERVICES.length) {
 				logger.info("Check service activation succeed");
-				return;
+				break;
 			}
-			Thread.sleep(2000);
+			Thread.sleep(5000);
 		}
+		Assert.assertEquals(SERVICES.length, activated_count);
 	}
 
 	@Test
@@ -138,6 +141,16 @@ public class AllTest {
 		Map<String, Set<String>> result = getClusterClient().getNodes();
 		Assert.assertNotNull(result);
 		Assert.assertEquals(1, result.size());
+	}
+
+	@Test
+	public void test22_get_active_list() throws URISyntaxException {
+		for (String service : SERVICES) {
+			List<String> result = getClusterClient().getActiveNodes(service);
+			Assert.assertNotNull(result);
+			Assert.assertEquals(1, result.size());
+			Assert.assertEquals(CLIENT_ADDRESS, result.get(0));
+		}
 	}
 
 	@Test

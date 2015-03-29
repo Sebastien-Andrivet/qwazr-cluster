@@ -24,6 +24,8 @@ import javax.servlet.ServletException;
 import javax.ws.rs.ApplicationPath;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import com.opensearchserver.cluster.manager.ClusterManager;
@@ -37,10 +39,17 @@ public class ClusterServer extends AbstractServer {
 	public final static int DEFAULT_PORT = 9099;
 	public final static String DEFAULT_HOSTNAME = "0.0.0.0";
 	private final static String MAIN_JAR = "oss-cluster.jar";
-	private final static String DEFAULT_DATADIR_NAME = "opensearchserver_cluster";
+
+	/**
+	 * Set the listening host or IP address
+	 */
+	public final static Option CONF_OPTION = new Option("c", "conf", true,
+			"The path to the configuration file");
+
+	private File configurationFile = null;
 
 	private ClusterServer() {
-		super(DEFAULT_HOSTNAME, DEFAULT_PORT, MAIN_JAR, DEFAULT_DATADIR_NAME);
+		super(DEFAULT_HOSTNAME, DEFAULT_PORT, MAIN_JAR, null);
 	}
 
 	@ApplicationPath("/")
@@ -55,10 +64,10 @@ public class ClusterServer extends AbstractServer {
 	}
 
 	public static void load(AbstractServer server, File data_directory,
-			Set<Class<?>> classes, String... registeredServices)
-			throws IOException {
+			File configurationFile, Set<Class<?>> classes,
+			String... registeredServices) throws IOException {
 		try {
-			ClusterManager.load(server, data_directory);
+			ClusterManager.load(server, data_directory, configurationFile);
 			if (classes != null)
 				classes.add(ClusterApplication.class);
 			if (registeredServices != null)
@@ -69,12 +78,20 @@ public class ClusterServer extends AbstractServer {
 	}
 
 	@Override
+	public void defineOptions(Options options) {
+		super.defineOptions(options);
+		options.addOption(CONF_OPTION);
+	}
+
+	@Override
 	public void commandLine(CommandLine cmd) throws IOException {
+		configurationFile = cmd.hasOption(CONF_OPTION.getOpt()) ? new File(
+				cmd.getOptionValue(CONF_OPTION.getOpt())) : null;
 	}
 
 	@Override
 	public void load() throws IOException {
-		load(this, getCurrentDataDir(), null);
+		load(this, getCurrentDataDir(), configurationFile, null);
 	}
 
 	@Override

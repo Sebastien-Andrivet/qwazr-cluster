@@ -17,7 +17,6 @@ package com.opensearchserver.cluster;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,6 +24,7 @@ import java.util.Set;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
@@ -37,7 +37,6 @@ import com.opensearchserver.cluster.service.ClusterServiceInterface;
 import com.opensearchserver.cluster.service.ClusterServiceStatusJson;
 import com.opensearchserver.cluster.service.ClusterStatusJson;
 import com.opensearchserver.utils.HttpUtils;
-import com.opensearchserver.utils.StringUtils;
 import com.opensearchserver.utils.json.JsonClientAbstract;
 import com.opensearchserver.utils.json.JsonClientException;
 
@@ -120,17 +119,17 @@ public class ClusterClient extends JsonClientAbstract implements
 		}
 	}
 
+	public final static TypeReference<List<String>> ListStringTypeRef = new TypeReference<List<String>>() {
+	};
+
 	@Override
 	public List<String> getActiveNodes(String service_name) {
 		try {
 			URIBuilder uriBuilder = getBaseUrl("/cluster/services/",
 					service_name, "/active");
 			Request request = Request.Get(uriBuilder.build());
-			HttpResponse response = execute(request, null, msTimeOut);
-			HttpUtils.checkStatusCodes(response, 200);
-			String list = HttpUtils.checkIsEntity(response,
-					ContentType.TEXT_PLAIN).toString();
-			return Arrays.asList(StringUtils.splitLines(list));
+			return (List<String>) execute(request, null, msTimeOut,
+					ListStringTypeRef, 200);
 		} catch (URISyntaxException | IOException e) {
 			throw new JsonClientException(e);
 		}
@@ -144,8 +143,8 @@ public class ClusterClient extends JsonClientAbstract implements
 			Request request = Request.Get(uriBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			HttpUtils.checkStatusCodes(response, 200);
-			return HttpUtils.checkIsEntity(response, ContentType.TEXT_PLAIN)
-					.toString();
+			return IOUtils.toString(HttpUtils.checkIsEntity(response,
+					ContentType.TEXT_PLAIN).getContent());
 		} catch (URISyntaxException | IOException e) {
 			throw new JsonClientException(e);
 		}

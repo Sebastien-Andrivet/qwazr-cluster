@@ -71,7 +71,7 @@ public interface ClusterServiceInterface {
 
 	@GET
 	@Path("/services/{service_name}/active")
-	@Produces(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.APPLICATION_JSON)
 	public List<String> getActiveNodes(
 			@PathParam("service_name") String service_name);
 

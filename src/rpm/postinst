@@ -1,0 +1,1 @@
+cp -f /usr/share/opensearchserver/oss-cluster /etc/init.d/oss-cluster && chmod a+x /etc/init.d/oss-cluster

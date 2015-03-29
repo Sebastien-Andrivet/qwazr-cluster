@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -41,6 +42,7 @@ import com.opensearchserver.cluster.service.ClusterServiceStatusJson;
 import com.opensearchserver.cluster.service.ClusterServiceStatusJson.StatusEnum;
 import com.opensearchserver.utils.json.JsonApplicationException;
 import com.opensearchserver.utils.server.AbstractServer;
+import com.opensearchserver.utils.threads.PeriodicThread;
 
 public class ClusterManager {
 
@@ -49,14 +51,16 @@ public class ClusterManager {
 
 	public static volatile ClusterManager INSTANCE = null;
 
-	public static void load(AbstractServer server, File directory)
-			throws IOException {
+	public static void load(AbstractServer server, File directory,
+			File configurationFile) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		try {
-			INSTANCE = new ClusterManager(server, directory);
+			INSTANCE = new ClusterManager(server, directory, configurationFile);
 			if (INSTANCE.isMaster()) {
-				INSTANCE.loadNodesFromOtherMaster();
+				// First, we get the node list from another master (if any)
+				ClusterManager.INSTANCE.loadNodesFromOtherMaster();
+				// All is set, let's start the monitoring
 				INSTANCE.startMonitoringThread();
 			}
 		} catch (URISyntaxException e) {
@@ -77,7 +81,7 @@ public class ClusterManager {
 
 	private final String myAddress;
 
-	private ClusterMonitoringThread clusterMonitoringThread = null;
+	private List<PeriodicThread> periodicThreads = null;
 
 	private Thread clusterNodeShutdownThread = null;
 
@@ -85,16 +89,22 @@ public class ClusterManager {
 
 	protected int port;
 
-	private ClusterManager(AbstractServer server, File rootDirectory)
-			throws IOException, URISyntaxException {
+	private ClusterManager(AbstractServer server, File rootDirectory,
+			File configurationFile) throws IOException, URISyntaxException {
 		this.port = server.getRestTcpPort();
 		myAddress = ClusterNode.toAddress(server.getCurrentHostname(), port);
 		logger.info("Server: " + myAddress);
 
 		// Look for the configuration file
-		File clusterConfigurationFile = CLUSTER_CONF_PATH != null ? new File(
-				CLUSTER_CONF_PATH) : new File(rootDirectory,
-				CLUSTER_CONFIGURATION_NAME);
+		File clusterConfigurationFile = configurationFile;
+		if (clusterConfigurationFile == null && CLUSTER_CONF_PATH != null)
+			clusterConfigurationFile = new File(CLUSTER_CONF_PATH);
+		if (clusterConfigurationFile == null && rootDirectory != null)
+			clusterConfigurationFile = new File(rootDirectory,
+					CLUSTER_CONFIGURATION_NAME);
+		if (clusterConfigurationFile == null)
+			clusterConfigurationFile = new File(CLUSTER_CONFIGURATION_NAME);
+		// Load the configuration
 		ClusterConfiguration clusterConfiguration = ClusterConfiguration
 				.newInstance(clusterConfigurationFile);
 
@@ -104,7 +114,6 @@ public class ClusterManager {
 				|| clusterConfiguration.masters.isEmpty()) {
 			clusterMasterSet = null;
 			clusterNodeMap = null;
-			clusterMonitoringThread = null;
 			isMaster = false;
 			logger.info("No cluster configuration. This node is not part of a cluster.");
 			return;
@@ -133,8 +142,10 @@ public class ClusterManager {
 		clusterNodeMap = new ClusterNodeMap();
 	}
 
-	private void loadNodesFromOtherMaster() {
-		// Let's try to load the other nodes from another master
+	/**
+	 * Load the node list from another master
+	 */
+	void loadNodesFromOtherMaster() {
 		for (String master : clusterMasterSet) {
 			if (master == myAddress)
 				continue;
@@ -153,9 +164,18 @@ public class ClusterManager {
 		}
 	}
 
-	private void startMonitoringThread() {
-		// All is set, let's start the monitoring
-		clusterMonitoringThread = new ClusterMonitoringThread(60);
+	/**
+	 * Start the monitoring thread
+	 */
+	private synchronized void startMonitoringThread() {
+		if (!isMaster)
+			return;
+		if (periodicThreads != null)
+			return;
+		logger.info("Starting the periodc threads");
+		periodicThreads = new ArrayList<PeriodicThread>(2);
+		periodicThreads.add(new ClusterMasterThread(600));
+		periodicThreads.add(new ClusterMonitoringThread(60));
 	}
 
 	private ClusterNodeMap checkMaster() {
@@ -230,7 +250,7 @@ public class ClusterManager {
 		if (cache == null)
 			return null;
 		ClusterNode[] aa = cache.activeArray;
-		if (aa == null)
+		if (aa == null || aa.length == 0)
 			return null;
 		return aa[RandomUtils.nextInt(0, aa.length)].address;
 	}
@@ -308,5 +328,14 @@ public class ClusterManager {
 			servicesStatusMap.put(entry.getKey(), status);
 		}
 		return servicesStatusMap;
+	}
+
+	public Map<String, Date> getLastExecutions() {
+		if (periodicThreads == null)
+			return null;
+		Map<String, Date> threadsMap = new HashMap<String, Date>();
+		for (PeriodicThread thread : periodicThreads)
+			threadsMap.put(thread.getName(), thread.getLastExecutionDate());
+		return threadsMap;
 	}
 }

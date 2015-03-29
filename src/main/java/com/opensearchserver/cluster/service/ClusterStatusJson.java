@@ -15,6 +15,7 @@
  */
 package com.opensearchserver.cluster.service;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -34,6 +35,7 @@ public class ClusterStatusJson {
 	public final Map<String, ClusterNodeStatusJson> inactive_nodes;
 	public final Map<String, StatusEnum> services;
 	public final Set<String> masters;
+	public final Map<String, Date> last_executions;
 
 	public ClusterStatusJson() {
 		is_master = false;
@@ -41,6 +43,7 @@ public class ClusterStatusJson {
 		inactive_nodes = null;
 		services = null;
 		masters = null;
+		last_executions = null;
 	}
 
 	public ClusterStatusJson(ClusterManager clusterManager) {
@@ -49,6 +52,7 @@ public class ClusterStatusJson {
 		this.inactive_nodes = new TreeMap<String, ClusterNodeStatusJson>();
 		this.services = clusterManager.getServicesStatus();
 		this.masters = clusterManager.getMasterSet();
+		this.last_executions = clusterManager.getLastExecutions();
 	}
 
 	public void addNodeStatus(ClusterNode node) {
