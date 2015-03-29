@@ -17,7 +17,6 @@ package com.opensearchserver.cluster;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Set;
 
 import javax.servlet.ServletException;
@@ -64,17 +63,10 @@ public class ClusterServer extends AbstractServer {
 	}
 
 	public static void load(AbstractServer server, File data_directory,
-			File configurationFile, Set<Class<?>> classes,
-			String... registeredServices) throws IOException {
-		try {
-			ClusterManager.load(server, data_directory, configurationFile);
-			if (classes != null)
-				classes.add(ClusterApplication.class);
-			if (registeredServices != null)
-				ClusterManager.INSTANCE.registerMe(registeredServices);
-		} catch (URISyntaxException e) {
-			throw new IOException(e);
-		}
+			File configurationFile, Set<Class<?>> classes) throws IOException {
+		ClusterManager.load(server, data_directory, configurationFile);
+		if (classes != null)
+			classes.add(ClusterApplication.class);
 	}
 
 	@Override
