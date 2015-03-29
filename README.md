@@ -34,6 +34,13 @@ Compile and package (the binary will located in the target directory):
 mvn clean package
 ```
 
+### Download packages
+
+You can download our nightly build available here:
+http://www.opensearchserver.com/ftp/oss-cluster
+
+RPM and .DEB packages are available.
+
 ### Usage
 
 #### Configuration
@@ -58,7 +65,9 @@ You can run several master servers, they will automatically be synchronised.
 
 #### Get an overall status of the cluster
 
+```shell
 curl -XGET http://192.168.0.10:9099/cluster
+```
 
 ```json
 {
@@ -85,37 +94,44 @@ curl -XGET http://192.168.0.10:9099/cluster
 
 #### Register a server node and its services.
 
-```shell
-curl -XGET http://localhost:9091
-```
-
-#### Get information about a parser
+This API works like an upsert. The first call create the resource. The next call update the resource.
 
 ```shell
-curl -XGET http://localhost:9091/pdfbox
+curl -H "Content-Type: application/json" \
+	-d '{"address": "http://192.168.0.65:8080","services": ["job","extractor"]}' \
+	http://192.168.0.10:9099
 ```
-    
-#### Submit a document to a parser
-
-By uploading a document:
-
-```shell
-curl -XPUT --data-binary @tutorial.pdf http://localhost:9091/pdfbox
-```
-    
-If the file is already available in the server, the follow API can be used:
+#### Unregister a server node.
 
 ```shell
-curl -XGET http://localhost:9091/pdfbox?path=/home/user/myfile.pdf
+curl -XDELETE http://192.168.0.62:9099/cluster?address=http%3A%2F%2F192.168.0.65%3A8080
 ```
+
+#### Get the list of server nodes for one service
+
+```shell
+curl -XGET http://192.168.0.10:9099/cluster/service/{service_name}/active
+```
+
+The list is returned in JSON format.
+
+Replace **service_name** by the name of the service.
+
+#### Get one server node  for the given service
+
+```shell
+curl -XGET http://192.168.0.10:9099/cluster/service/{service_name}/active/random
+```
+
+The address is returned in TEXT/PLAIN format.
 
 Issues and change Log
 ---------------------
 
 Issues and milestones are tracked on GitHub:
 
-- [Open issues](https://github.com/opensearchserver/oss-extractor/issues?q=is%3Aopen+is%3Aissue)
-- [Closed issues](https://github.com/opensearchserver/oss-extractor/issues?q=is%3Aissue+is%3Aclosed)
+- [Open issues](https://github.com/opensearchserver/oss-cluster/issues?q=is%3Aopen+is%3Aissue)
+- [Closed issues](https://github.com/opensearchserver/oss-cluster/issues?q=is%3Aissue+is%3Aclosed)
 
 License
 -------
