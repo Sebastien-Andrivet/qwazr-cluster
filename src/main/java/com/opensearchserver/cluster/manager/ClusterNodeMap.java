@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.opensearchserver.utils.LockUtils.ReadWriteLock;
+import com.opensearchserver.utils.server.ServerException;
 
 public class ClusterNodeMap {
 
@@ -162,9 +163,10 @@ public class ClusterNodeMap {
 	 *            the services provided by the node
 	 * @return the node record
 	 * @throws URISyntaxException
+	 * @throws ServerException
 	 */
 	ClusterNode upsert(String address, Set<String> services)
-			throws URISyntaxException {
+			throws URISyntaxException, ServerException {
 
 		ClusterNode newNode = new ClusterNode(address, services);
 

@@ -41,8 +41,8 @@ import com.opensearchserver.cluster.service.ClusterNodeRegisterJson;
 import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
 import com.opensearchserver.cluster.service.ClusterServiceStatusJson;
 import com.opensearchserver.cluster.service.ClusterServiceStatusJson.StatusEnum;
-import com.opensearchserver.utils.json.JsonApplicationException;
 import com.opensearchserver.utils.server.AbstractServer;
+import com.opensearchserver.utils.server.ServerException;
 import com.opensearchserver.utils.threads.PeriodicThread;
 
 public class ClusterManager {
@@ -179,27 +179,28 @@ public class ClusterManager {
 		periodicThreads.add(new ClusterMonitoringThread(60));
 	}
 
-	private ClusterNodeMap checkMaster() {
+	private ClusterNodeMap checkMaster() throws ServerException {
 		if (clusterNodeMap == null)
-			throw new JsonApplicationException(Status.NOT_ACCEPTABLE,
+			throw new ServerException(Status.NOT_ACCEPTABLE,
 					"I am not a master");
 		return clusterNodeMap;
 	}
 
 	public ClusterNode upsertNode(String address, Set<String> services)
-			throws URISyntaxException {
+			throws URISyntaxException, ServerException {
 		return checkMaster().upsert(address, services);
 	}
 
-	void updateNodeStatus(ClusterNode node) {
+	void updateNodeStatus(ClusterNode node) throws ServerException {
 		checkMaster().status(node);
 	}
 
-	public ClusterNode removeNode(String address) throws URISyntaxException {
+	public ClusterNode removeNode(String address) throws URISyntaxException,
+			ServerException {
 		return checkMaster().remove(address);
 	}
 
-	public List<ClusterNode> getNodeList() {
+	public List<ClusterNode> getNodeList() throws ServerException {
 		return checkMaster().getNodeList();
 	}
 
@@ -220,21 +221,21 @@ public class ClusterManager {
 		return nodeNameList;
 	}
 
-	private Cache getNodeSetCache(String service) {
+	private Cache getNodeSetCache(String service) throws ServerException {
 		ClusterNodeSet nodeSet = checkMaster().getNodeSet(service);
 		if (nodeSet == null)
 			return null;
 		return nodeSet.getCache();
 	}
 
-	public List<String> getInactiveNodes(String service) {
+	public List<String> getInactiveNodes(String service) throws ServerException {
 		Cache cache = getNodeSetCache(service);
 		if (cache == null)
 			return ClusterServiceStatusJson.EMPTY_LIST;
 		return buildList(cache.activeArray);
 	}
 
-	public List<String> getActiveNodes(String service) {
+	public List<String> getActiveNodes(String service) throws ServerException {
 		Cache cache = getNodeSetCache(service);
 		if (cache == null)
 			return ClusterServiceStatusJson.EMPTY_LIST;
@@ -245,8 +246,10 @@ public class ClusterManager {
 	 * @param service
 	 *            the name of the service
 	 * @return a randomly choosen node
+	 * @throws ServerException
+	 *             if any error occurs
 	 */
-	public String getActiveNodeRandom(String service) {
+	public String getActiveNodeRandom(String service) throws ServerException {
 		Cache cache = getNodeSetCache(service);
 		if (cache == null)
 			return null;
@@ -263,8 +266,11 @@ public class ClusterManager {
 	 * @param service
 	 *            the name of the service
 	 * @return the status of the service
+	 * @throws ServerException
+	 *             if any error occurs
 	 */
-	public ClusterServiceStatusJson getServiceStatus(String service) {
+	public ClusterServiceStatusJson getServiceStatus(String service)
+			throws ServerException {
 		Cache cache = getNodeSetCache(service);
 		if (cache == null)
 			return new ClusterServiceStatusJson();

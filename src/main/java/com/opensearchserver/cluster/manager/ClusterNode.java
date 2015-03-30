@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
 import com.opensearchserver.cluster.service.ClusterNodeStatusJson.State;
 import com.opensearchserver.cluster.service.ClusterServiceInterface;
+import com.opensearchserver.utils.server.ServerException;
 
 public class ClusterNode implements FutureCallback<HttpResponse> {
 
@@ -62,8 +63,10 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 	 * @param services
 	 *            The set of services provided by this node
 	 * @throws URISyntaxException
+	 * @throws ServerException
 	 */
-	ClusterNode(String address, Set<String> services) throws URISyntaxException {
+	ClusterNode(String address, Set<String> services)
+			throws URISyntaxException, ServerException {
 		this.baseURI = toUri(address, null);
 		this.address = baseURI.toString().intern();
 		this.services = services;
@@ -88,7 +91,11 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 						: clusterNodeStatus.error_since);
 		if (error != null)
 			logger.warn(error);
-		ClusterManager.INSTANCE.updateNodeStatus(this);
+		try {
+			ClusterManager.INSTANCE.updateNodeStatus(this);
+		} catch (ServerException e) {
+			logger.error(e.getMessage(), e);
+		}
 	}
 
 	void startCheck(CloseableHttpAsyncClient httpclient) {
