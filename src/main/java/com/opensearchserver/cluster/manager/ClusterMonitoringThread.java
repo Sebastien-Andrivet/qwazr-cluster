@@ -18,11 +18,17 @@ package com.opensearchserver.cluster.manager;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.opensearchserver.utils.server.ServerException;
 import com.opensearchserver.utils.threads.PeriodicThread;
 import com.opensearchserver.utils.threads.ThreadUtils;
 
 public class ClusterMonitoringThread extends PeriodicThread {
+
+	private static final Logger logger = LoggerFactory
+			.getLogger(ClusterMonitoringThread.class);
 
 	private final RequestConfig requestConfig;
 	private final CloseableHttpAsyncClient httpclient;
@@ -41,8 +47,13 @@ public class ClusterMonitoringThread extends PeriodicThread {
 
 	@Override
 	public void runner() {
-		for (ClusterNode clusterNode : ClusterManager.INSTANCE.getNodeList())
-			clusterNode.startCheck(httpclient);
+		try {
+			for (ClusterNode clusterNode : ClusterManager.INSTANCE
+					.getNodeList())
+				clusterNode.startCheck(httpclient);
+		} catch (ServerException e) {
+			logger.error(e.getMessage(), e);
+		}
 	}
 
 	@Override

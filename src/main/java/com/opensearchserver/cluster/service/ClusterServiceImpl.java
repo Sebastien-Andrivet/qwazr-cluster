@@ -20,39 +20,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import com.opensearchserver.cluster.manager.ClusterManager;
 import com.opensearchserver.cluster.manager.ClusterNode;
-import com.opensearchserver.utils.json.JsonApplicationException;
+import com.opensearchserver.utils.server.ServerException;
 
 public class ClusterServiceImpl implements ClusterServiceInterface {
 
 	@Override
 	public ClusterStatusJson list() {
-		ClusterManager manager = ClusterManager.INSTANCE;
-		List<ClusterNode> clusterNodeList = manager.getNodeList();
-		if (clusterNodeList == null)
-			return null;
-		ClusterStatusJson clusterStatus = new ClusterStatusJson(manager);
-		for (ClusterNode clusterNode : clusterNodeList)
-			clusterStatus.addNodeStatus(clusterNode);
-		return clusterStatus;
+		try {
+			ClusterManager manager = ClusterManager.INSTANCE;
+			List<ClusterNode> clusterNodeList = manager.getNodeList();
+			if (clusterNodeList == null)
+				return null;
+			ClusterStatusJson clusterStatus = new ClusterStatusJson(manager);
+			for (ClusterNode clusterNode : clusterNodeList)
+				clusterStatus.addNodeStatus(clusterNode);
+			return clusterStatus;
+		} catch (ServerException e) {
+			throw e.getJsonException();
+		}
 	}
 
 	@Override
 	public Map<String, Set<String>> getNodes() {
-		ClusterManager manager = ClusterManager.INSTANCE;
-		Map<String, Set<String>> nodeMap = new HashMap<String, Set<String>>();
-		List<ClusterNode> clusterNodeList = manager.getNodeList();
-		if (clusterNodeList == null)
+		try {
+			ClusterManager manager = ClusterManager.INSTANCE;
+			Map<String, Set<String>> nodeMap = new HashMap<String, Set<String>>();
+			List<ClusterNode> clusterNodeList;
+			clusterNodeList = manager.getNodeList();
+			if (clusterNodeList == null)
+				return nodeMap;
+			for (ClusterNode clusterNode : clusterNodeList)
+				if (clusterNode.services != null
+						&& !clusterNode.services.isEmpty())
+					nodeMap.put(clusterNode.address, clusterNode.services);
 			return nodeMap;
-		for (ClusterNode clusterNode : clusterNodeList)
-			if (clusterNode.services != null && !clusterNode.services.isEmpty())
-				nodeMap.put(clusterNode.address, clusterNode.services);
-		return nodeMap;
+		} catch (ServerException e) {
+			throw e.getJsonException();
+		}
 	}
 
 	@Override
@@ -65,51 +74,63 @@ public class ClusterServiceImpl implements ClusterServiceInterface {
 	@Override
 	public ClusterNodeStatusJson register(ClusterNodeRegisterJson register) {
 		if (register == null)
-			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
+			throw new ServerException(Status.NOT_ACCEPTABLE).getJsonException();
 		ClusterManager manager = ClusterManager.INSTANCE;
 		try {
 			ClusterNode clusterNode = manager.upsertNode(register.address,
 					register.services);
 			return clusterNode.getStatus();
 		} catch (Exception e) {
-			throw new JsonApplicationException(e);
+			throw ServerException.getJsonException(e);
 		}
 	}
 
 	@Override
 	public Response unregister(String address) {
 		if (address == null)
-			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
+			throw new ServerException(Status.NOT_ACCEPTABLE).getJsonException();
 		ClusterManager manager = ClusterManager.INSTANCE;
 		try {
 			ClusterNode clusterNode = manager.removeNode(address);
 			return clusterNode == null ? Response.status(Status.NOT_FOUND)
 					.build() : Response.ok().build();
 		} catch (Exception e) {
-			throw new JsonApplicationException(e);
+			throw ServerException.getTextException(e);
 		}
 	}
 
 	@Override
 	public List<String> getActiveNodes(String service_name) {
 		if (service_name == null)
-			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
+			throw new ServerException(Status.NOT_ACCEPTABLE).getJsonException();
 		ClusterManager manager = ClusterManager.INSTANCE;
-		return manager.getActiveNodes(service_name);
+		try {
+			return manager.getActiveNodes(service_name);
+		} catch (ServerException e) {
+			throw e.getJsonException();
+		}
 	}
 
 	@Override
 	public String getActiveNodeRandom(String service_name) {
 		if (service_name == null)
-			throw new WebApplicationException(Status.NOT_ACCEPTABLE);
+			throw new ServerException(Status.NOT_ACCEPTABLE).getJsonException();
 		ClusterManager manager = ClusterManager.INSTANCE;
-		return manager.getActiveNodeRandom(service_name);
+		try {
+			return manager.getActiveNodeRandom(service_name);
+		} catch (ServerException e) {
+			throw e.getJsonException();
+		}
 	}
 
 	@Override
 	public ClusterServiceStatusJson getServiceStatus(String service_name) {
 		ClusterManager manager = ClusterManager.INSTANCE;
-		return manager.getServiceStatus(service_name);
+		try {
+			return manager.getServiceStatus(service_name);
+		} catch (ServerException e) {
+			throw e.getJsonException();
+		}
 	}
 
 }
