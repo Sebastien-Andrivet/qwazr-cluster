@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opensearchserver.cluster;
+package com.opensearchserver.cluster.client;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -37,13 +37,14 @@ import com.opensearchserver.cluster.service.ClusterServiceInterface;
 import com.opensearchserver.cluster.service.ClusterServiceStatusJson;
 import com.opensearchserver.cluster.service.ClusterStatusJson;
 import com.opensearchserver.utils.HttpUtils;
-import com.opensearchserver.utils.json.JsonClientAbstract;
-import com.opensearchserver.utils.json.JsonClientException;
+import com.opensearchserver.utils.json.client.JsonClientAbstract;
+import com.opensearchserver.utils.json.client.JsonClientException;
 
-public class ClusterClient extends JsonClientAbstract implements
+public class ClusterSingleClient extends JsonClientAbstract implements
 		ClusterServiceInterface {
 
-	public ClusterClient(String url, int msTimeOut) throws URISyntaxException {
+	public ClusterSingleClient(String url, int msTimeOut)
+			throws URISyntaxException {
 		super(url, msTimeOut);
 	}
 
