@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -32,7 +33,6 @@ import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
 import com.opensearchserver.cluster.service.ClusterServiceInterface;
 import com.opensearchserver.cluster.service.ClusterServiceStatusJson;
 import com.opensearchserver.cluster.service.ClusterStatusJson;
-import com.opensearchserver.utils.json.client.JsonClientException;
 import com.opensearchserver.utils.json.client.JsonMultiClientAbstract;
 
 public class ClusterMultiClient extends
@@ -55,11 +55,11 @@ public class ClusterMultiClient extends
 
 	@Override
 	public ClusterStatusJson list() {
-		JsonClientException exception = null;
+		WebApplicationException exception = null;
 		for (ClusterSingleClient client : this) {
 			try {
 				return client.list();
-			} catch (JsonClientException e) {
+			} catch (WebApplicationException e) {
 				logger.warn(e.getMessage(), exception = e);
 			}
 		}
@@ -68,11 +68,11 @@ public class ClusterMultiClient extends
 
 	@Override
 	public Map<String, Set<String>> getNodes() {
-		JsonClientException exception = null;
+		WebApplicationException exception = null;
 		for (ClusterSingleClient client : this) {
 			try {
 				return client.getNodes();
-			} catch (JsonClientException e) {
+			} catch (WebApplicationException e) {
 				logger.warn(e.getMessage(), exception = e);
 			}
 		}
@@ -85,7 +85,7 @@ public class ClusterMultiClient extends
 		for (ClusterSingleClient client : this) {
 			try {
 				result = client.register(register);
-			} catch (JsonClientException e) {
+			} catch (WebApplicationException e) {
 				logger.warn(e.getMessage(), e);
 			}
 		}
@@ -94,15 +94,14 @@ public class ClusterMultiClient extends
 
 	@Override
 	public Response unregister(String address) {
-		Response response = null;
 		for (ClusterSingleClient client : this) {
 			try {
-				response = client.unregister(address);
-			} catch (JsonClientException e) {
+				client.unregister(address);
+			} catch (WebApplicationException e) {
 				logger.warn(e.getMessage(), e);
 			}
 		}
-		return response;
+		return Response.ok().build();
 	}
 
 	@Override
@@ -112,11 +111,11 @@ public class ClusterMultiClient extends
 
 	@Override
 	public ClusterServiceStatusJson getServiceStatus(String service_name) {
-		JsonClientException exception = null;
+		WebApplicationException exception = null;
 		for (ClusterSingleClient client : this) {
 			try {
 				return client.getServiceStatus(service_name);
-			} catch (JsonClientException e) {
+			} catch (WebApplicationException e) {
 				logger.warn(e.getMessage(), exception = e);
 			}
 		}
@@ -125,11 +124,11 @@ public class ClusterMultiClient extends
 
 	@Override
 	public List<String> getActiveNodes(String service_name) {
-		JsonClientException exception = null;
+		WebApplicationException exception = null;
 		for (ClusterSingleClient client : this) {
 			try {
 				return client.getActiveNodes(service_name);
-			} catch (JsonClientException e) {
+			} catch (WebApplicationException e) {
 				logger.warn(e.getMessage(), exception = e);
 			}
 		}
@@ -138,11 +137,11 @@ public class ClusterMultiClient extends
 
 	@Override
 	public String getActiveNodeRandom(String service_name) {
-		JsonClientException exception = null;
+		WebApplicationException exception = null;
 		for (ClusterSingleClient client : this) {
 			try {
 				return client.getActiveNodeRandom(service_name);
-			} catch (JsonClientException e) {
+			} catch (WebApplicationException e) {
 				logger.warn(e.getMessage(), exception = e);
 			}
 		}

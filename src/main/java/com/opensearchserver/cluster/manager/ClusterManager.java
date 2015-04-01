@@ -83,7 +83,7 @@ public class ClusterManager {
 
 	private final ClusterMultiClient clusterClient;
 
-	private final String myAddress;
+	public final String myAddress;
 
 	private List<PeriodicThread> periodicThreads = null;
 
