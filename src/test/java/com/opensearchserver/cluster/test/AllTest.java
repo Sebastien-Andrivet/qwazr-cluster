@@ -30,8 +30,8 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import com.opensearchserver.cluster.ClusterClient;
 import com.opensearchserver.cluster.ClusterServer;
+import com.opensearchserver.cluster.client.ClusterSingleClient;
 import com.opensearchserver.cluster.service.ClusterNodeRegisterJson;
 import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
 import com.opensearchserver.cluster.service.ClusterServiceStatusJson;
@@ -50,8 +50,8 @@ public class AllTest {
 
 	static final Logger logger = Logger.getLogger(AllTest.class.getName());
 
-	private ClusterClient getClusterClient() throws URISyntaxException {
-		return new ClusterClient(CLIENT_ADDRESS, CLIENT_TIMEOUT);
+	private ClusterSingleClient getClusterClient() throws URISyntaxException {
+		return new ClusterSingleClient(CLIENT_ADDRESS, CLIENT_TIMEOUT);
 	}
 
 	@Test

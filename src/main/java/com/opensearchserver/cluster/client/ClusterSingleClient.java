@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.opensearchserver.cluster;
+package com.opensearchserver.cluster.client;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -37,13 +38,13 @@ import com.opensearchserver.cluster.service.ClusterServiceInterface;
 import com.opensearchserver.cluster.service.ClusterServiceStatusJson;
 import com.opensearchserver.cluster.service.ClusterStatusJson;
 import com.opensearchserver.utils.HttpUtils;
-import com.opensearchserver.utils.json.JsonClientAbstract;
-import com.opensearchserver.utils.json.JsonClientException;
+import com.opensearchserver.utils.json.client.JsonClientAbstract;
 
-public class ClusterClient extends JsonClientAbstract implements
+public class ClusterSingleClient extends JsonClientAbstract implements
 		ClusterServiceInterface {
 
-	public ClusterClient(String url, int msTimeOut) throws URISyntaxException {
+	public ClusterSingleClient(String url, int msTimeOut)
+			throws URISyntaxException {
 		super(url, msTimeOut);
 	}
 
@@ -55,7 +56,7 @@ public class ClusterClient extends JsonClientAbstract implements
 			return execute(request, null, msTimeOut, ClusterStatusJson.class,
 					200);
 		} catch (URISyntaxException | IOException e) {
-			throw new JsonClientException(e);
+			throw new WebApplicationException(e);
 		}
 	}
 
@@ -70,7 +71,7 @@ public class ClusterClient extends JsonClientAbstract implements
 			return (Map<String, Set<String>>) execute(request, null, msTimeOut,
 					MapStringSetStringTypeRef, 200);
 		} catch (URISyntaxException | IOException e) {
-			throw new JsonClientException(e);
+			throw new WebApplicationException(e);
 		}
 	}
 
@@ -82,7 +83,7 @@ public class ClusterClient extends JsonClientAbstract implements
 			return execute(request, register, msTimeOut,
 					ClusterNodeStatusJson.class, 200);
 		} catch (URISyntaxException | IOException e) {
-			throw new JsonClientException(e);
+			throw new WebApplicationException(e);
 		}
 	}
 
@@ -97,7 +98,7 @@ public class ClusterClient extends JsonClientAbstract implements
 			return Response.status(response.getStatusLine().getStatusCode())
 					.build();
 		} catch (URISyntaxException | IOException e) {
-			throw new JsonClientException(e);
+			throw new WebApplicationException(e);
 		}
 	}
 
@@ -115,7 +116,7 @@ public class ClusterClient extends JsonClientAbstract implements
 			return execute(request, null, msTimeOut,
 					ClusterServiceStatusJson.class, 200);
 		} catch (URISyntaxException | IOException e) {
-			throw new JsonClientException(e);
+			throw new WebApplicationException(e);
 		}
 	}
 
@@ -131,7 +132,7 @@ public class ClusterClient extends JsonClientAbstract implements
 			return (List<String>) execute(request, null, msTimeOut,
 					ListStringTypeRef, 200);
 		} catch (URISyntaxException | IOException e) {
-			throw new JsonClientException(e);
+			throw new WebApplicationException(e);
 		}
 	}
 
@@ -146,7 +147,7 @@ public class ClusterClient extends JsonClientAbstract implements
 			return IOUtils.toString(HttpUtils.checkIsEntity(response,
 					ContentType.TEXT_PLAIN).getContent());
 		} catch (URISyntaxException | IOException e) {
-			throw new JsonClientException(e);
+			throw new WebApplicationException(e);
 		}
 	}
 

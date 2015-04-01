@@ -35,7 +35,8 @@ import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.opensearchserver.cluster.ClusterClient;
+import com.opensearchserver.cluster.client.ClusterMultiClient;
+import com.opensearchserver.cluster.client.ClusterSingleClient;
 import com.opensearchserver.cluster.manager.ClusterNodeSet.Cache;
 import com.opensearchserver.cluster.service.ClusterNodeRegisterJson;
 import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
@@ -80,7 +81,9 @@ public class ClusterManager {
 
 	private final Set<String> clusterMasterSet;
 
-	private final String myAddress;
+	private final ClusterMultiClient clusterClient;
+
+	public final String myAddress;
 
 	private List<PeriodicThread> periodicThreads = null;
 
@@ -115,6 +118,7 @@ public class ClusterManager {
 				|| clusterConfiguration.masters.isEmpty()) {
 			clusterMasterSet = null;
 			clusterNodeMap = null;
+			clusterClient = null;
 			isMaster = false;
 			logger.info("No cluster configuration. This node is not part of a cluster.");
 			return;
@@ -132,6 +136,7 @@ public class ClusterManager {
 				logger.info("I am a master!");
 			}
 		}
+		clusterClient = new ClusterMultiClient(clusterMasterSet, 60000);
 		this.isMaster = isMaster;
 		if (!isMaster) {
 			clusterNodeMap = null;
@@ -152,8 +157,8 @@ public class ClusterManager {
 				continue;
 			try {
 				logger.warn("Get node list from  " + master);
-				Map<String, Set<String>> nodesMap = new ClusterClient(master,
-						60000).getNodes();
+				Map<String, Set<String>> nodesMap = new ClusterSingleClient(
+						master, 60000).getNodes();
 				if (nodesMap == null)
 					continue;
 				for (Map.Entry<String, Set<String>> entry : nodesMap.entrySet())
@@ -291,19 +296,12 @@ public class ClusterManager {
 	}
 
 	public void registerMe(String... services) {
-		if (clusterMasterSet == null || services == null
-				|| services.length == 0)
+		if (clusterClient == null || clusterMasterSet == null
+				|| services == null || services.length == 0)
 			return;
-		for (String master : clusterMasterSet) {
-			logger.info("Registering as a service to " + master);
-			try {
-				new ClusterClient(master, 60000)
-						.register(new ClusterNodeRegisterJson(myAddress,
-								services));
-			} catch (Exception e) {
-				logger.warn(e.getMessage(), e);
-			}
-		}
+		logger.info("Registering to the master");
+		clusterClient
+				.register(new ClusterNodeRegisterJson(myAddress, services));
 		if (clusterNodeShutdownThread == null) {
 			clusterNodeShutdownThread = new Thread() {
 				@Override
@@ -320,12 +318,10 @@ public class ClusterManager {
 	}
 
 	public void unregisterMe() throws URISyntaxException {
-		if (clusterMasterSet == null)
+		if (clusterClient == null)
 			return;
-		for (String master : clusterMasterSet) {
-			logger.info("Unregistering to " + master);
-			new ClusterClient(master, 60000).unregister(myAddress);
-		}
+		logger.info("Unregistering from masters");
+		clusterClient.unregister(myAddress);
 	}
 
 	public TreeMap<String, StatusEnum> getServicesStatus() {
@@ -350,5 +346,9 @@ public class ClusterManager {
 		for (PeriodicThread thread : periodicThreads)
 			threadsMap.put(thread.getName(), thread.getLastExecutionDate());
 		return threadsMap;
+	}
+
+	public ClusterMultiClient getClusterClient() {
+		return clusterClient;
 	}
 }
