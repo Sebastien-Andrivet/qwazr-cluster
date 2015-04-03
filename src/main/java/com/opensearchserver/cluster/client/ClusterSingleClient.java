@@ -37,7 +37,7 @@ import com.opensearchserver.cluster.service.ClusterNodeStatusJson;
 import com.opensearchserver.cluster.service.ClusterServiceInterface;
 import com.opensearchserver.cluster.service.ClusterServiceStatusJson;
 import com.opensearchserver.cluster.service.ClusterStatusJson;
-import com.opensearchserver.utils.HttpUtils;
+import com.opensearchserver.utils.http.HttpUtils;
 import com.opensearchserver.utils.json.client.JsonClientAbstract;
 
 public class ClusterSingleClient extends JsonClientAbstract implements
