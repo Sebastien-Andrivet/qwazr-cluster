@@ -55,28 +55,30 @@ public class ClusterMultiClient extends
 
 	@Override
 	public ClusterStatusJson list() {
-		WebApplicationException exception = null;
+		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
+				logger);
 		for (ClusterSingleClient client : this) {
 			try {
 				return client.list();
 			} catch (WebApplicationException e) {
-				logger.warn(e.getMessage(), exception = e);
+				exceptionHolder.switchAndWarn(e);
 			}
 		}
-		throw exception;
+		throw exceptionHolder.getException();
 	}
 
 	@Override
 	public Map<String, Set<String>> getNodes() {
-		WebApplicationException exception = null;
+		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
+				logger);
 		for (ClusterSingleClient client : this) {
 			try {
 				return client.getNodes();
 			} catch (WebApplicationException e) {
-				logger.warn(e.getMessage(), exception = e);
+				exceptionHolder.switchAndWarn(e);
 			}
 		}
-		throw exception;
+		throw exceptionHolder.getException();
 	}
 
 	@Override
@@ -111,41 +113,44 @@ public class ClusterMultiClient extends
 
 	@Override
 	public ClusterServiceStatusJson getServiceStatus(String service_name) {
-		WebApplicationException exception = null;
+		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
+				logger);
 		for (ClusterSingleClient client : this) {
 			try {
 				return client.getServiceStatus(service_name);
 			} catch (WebApplicationException e) {
-				logger.warn(e.getMessage(), exception = e);
+				exceptionHolder.switchAndWarn(e);
 			}
 		}
-		throw exception;
+		throw exceptionHolder.getException();
 	}
 
 	@Override
 	public List<String> getActiveNodes(String service_name) {
-		WebApplicationException exception = null;
+		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
+				logger);
 		for (ClusterSingleClient client : this) {
 			try {
 				return client.getActiveNodes(service_name);
 			} catch (WebApplicationException e) {
-				logger.warn(e.getMessage(), exception = e);
+				exceptionHolder.switchAndWarn(e);
 			}
 		}
-		throw exception;
+		throw exceptionHolder.getException();
 	}
 
 	@Override
 	public String getActiveNodeRandom(String service_name) {
-		WebApplicationException exception = null;
+		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
+				logger);
 		for (ClusterSingleClient client : this) {
 			try {
 				return client.getActiveNodeRandom(service_name);
 			} catch (WebApplicationException e) {
-				logger.warn(e.getMessage(), exception = e);
+				exceptionHolder.switchAndWarn(e);
 			}
 		}
-		throw exception;
+		throw exceptionHolder.getException();
 	}
 
 }
