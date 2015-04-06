@@ -156,7 +156,7 @@ public class ClusterManager {
 			if (master == myAddress)
 				continue;
 			try {
-				logger.warn("Get node list from  " + master);
+				logger.info("Get node list from  " + master);
 				Map<String, Set<String>> nodesMap = new ClusterSingleClient(
 						master, 60000).getNodes();
 				if (nodesMap == null)
