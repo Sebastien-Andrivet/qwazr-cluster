@@ -56,7 +56,8 @@ public class ClusterSingleClient extends JsonClientAbstract implements
 			return execute(request, null, msTimeOut, ClusterStatusJson.class,
 					200);
 		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e);
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -71,7 +72,8 @@ public class ClusterSingleClient extends JsonClientAbstract implements
 			return (Map<String, Set<String>>) execute(request, null, msTimeOut,
 					MapStringSetStringTypeRef, 200);
 		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e);
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -83,7 +85,8 @@ public class ClusterSingleClient extends JsonClientAbstract implements
 			return execute(request, register, msTimeOut,
 					ClusterNodeStatusJson.class, 200);
 		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e);
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -98,7 +101,8 @@ public class ClusterSingleClient extends JsonClientAbstract implements
 			return Response.status(response.getStatusLine().getStatusCode())
 					.build();
 		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e);
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -116,7 +120,8 @@ public class ClusterSingleClient extends JsonClientAbstract implements
 			return execute(request, null, msTimeOut,
 					ClusterServiceStatusJson.class, 200);
 		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e);
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -132,7 +137,8 @@ public class ClusterSingleClient extends JsonClientAbstract implements
 			return (List<String>) execute(request, null, msTimeOut,
 					ListStringTypeRef, 200);
 		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e);
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -147,7 +153,8 @@ public class ClusterSingleClient extends JsonClientAbstract implements
 			return IOUtils.toString(HttpUtils.checkIsEntity(response,
 					ContentType.TEXT_PLAIN).getContent());
 		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e);
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 
