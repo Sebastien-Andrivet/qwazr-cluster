@@ -1,7 +1,8 @@
-OpenSearchServer Cluster
-========================
+QWAZR Cluster
+=============
 
-An open source REST Web Service for Cluster management.  
+An open source REST Web Service for Cluster management. It is a component of QWAZR.
+https://github.com/qwazr/qwazr.git
 
 oss-cluster is a multi-master daemon in charge of maintaining a cluster of servers and services.
 It has been build to be fully redondant and fault tolerant.
@@ -25,7 +26,7 @@ Quickstart
 Clone the source code:
 
 ```shell
-git clone https://github.com/opensearchserver/oss-cluster.git
+git clone https://github.com/qwazr/qwazr-cluster.git
 ```
 
 Compile and package (the binary will located in the target directory):
@@ -37,9 +38,7 @@ mvn clean package
 ### Download packages
 
 You can download our nightly build available here:
-http://www.opensearchserver.com/ftp/oss-cluster
-
-RPM and .DEB packages are available.
+http://download.opensearchserver.com/qwazr-cluster
 
 ### Usage
 
@@ -130,8 +129,8 @@ Issues and change Log
 
 Issues and milestones are tracked on GitHub:
 
-- [Open issues](https://github.com/opensearchserver/oss-cluster/issues?q=is%3Aopen+is%3Aissue)
-- [Closed issues](https://github.com/opensearchserver/oss-cluster/issues?q=is%3Aissue+is%3Aclosed)
+- [Open issues](https://github.com/qwazr/qwazr-cluster/issues?q=is%3Aopen+is%3Aissue)
+- [Closed issues](https://github.com/qwazr/qwazr-cluster/issues?q=is%3Aissue+is%3Aclosed)
 
 License
 -------
