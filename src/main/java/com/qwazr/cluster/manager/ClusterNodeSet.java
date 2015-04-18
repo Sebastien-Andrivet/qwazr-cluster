@@ -17,11 +17,11 @@ package com.qwazr.cluster.manager;
 
 import java.util.HashMap;
 
-import com.opensearchserver.utils.LockUtils.ReadWriteLock;
+import com.qwazr.utils.LockUtils;
 
 public class ClusterNodeSet {
 
-	private final ReadWriteLock readWriteLock = new ReadWriteLock();
+	private final LockUtils.ReadWriteLock readWriteLock = new LockUtils.ReadWriteLock();
 
 	private final HashMap<String, ClusterNode> activeMap;
 	private final HashMap<String, ClusterNode> inactiveMap;
