@@ -3,13 +3,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.opensearchserver</groupId>
-	<artifactId>oss-cluster</artifactId>
-	<name>OpenSearchServer Cluster</name>
+	<artifactId>qwazr-cluster</artifactId>
+	<name>QWAZR Cluster</name>
 	<packaging>jar</packaging>
 	<prerequisites>
 		<maven>3.0</maven>
 	</prerequisites>
-	<url>http://www.opensearchserver.com</url>
+	<url>https://github.com/qwazr/qwazr-cluster</url>
 	<licenses>
 		<license>
 			<name>Apache License, Version 2.0</name>
@@ -23,15 +23,15 @@
 		<url>http://www.opensearchserver.com</url>
 	</organization>
 	<scm>
-		<connection>scm:git:git@github.com:opensearchserver/oss-cluster.git</connection>
-		<developerConnection>scm:git:git@github.com:opensearchserver/oss-cluster.git</developerConnection>
-		<url>git@github.com:opensearchserver/oss-cluster.git</url>
+		<connection>scm:git:git@github.com:qwazr/qwazr-cluster.git</connection>
+		<developerConnection>scm:git:git@github.com:qwazr/qwazr-cluster.git</developerConnection>
+		<url>git@github.com:qwazr/qwazr-cluster.git</url>
 	</scm>
 	<issueManagement>
-		<url>https://github.com/opensearchserver/oss-cluster/issues</url>
+		<url>https://github.com/qwazr/qwazr-cluster/issues</url>
 	</issueManagement>
 	<ciManagement>
-		<url>http://www.opensearchserver.com/jenkins</url>
+		<url>http://jenkins.opensearchserver.com/view/QWAZR/</url>
 	</ciManagement>
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
@@ -101,7 +101,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.opensearchserver</groupId>
-			<artifactId>oss-utils</artifactId>
+			<artifactId>qwazr-utils</artifactId>
 			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
@@ -253,175 +253,9 @@
 					<properties>
 						<property>
 							<name>listener</name>
-							<value>com.opensearchserver.cluster.test.ExecutionListener</value>
+							<value>com.qwazr.cluster.test.ExecutionListener</value>
 						</property>
 					</properties>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.3</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<shadedArtifactAttached>true</shadedArtifactAttached>
-							<shadedClassifierName>exec</shadedClassifierName>
-							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<manifestEntries>
-										<Main-Class>com.opensearchserver.cluster.ClusterServer</Main-Class>
-									</manifestEntries>
-								</transformer>
-							</transformers>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>jdeb</artifactId>
-				<groupId>org.vafer</groupId>
-				<version>1.4</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>jdeb</goal>
-						</goals>
-						<configuration>
-							<deb>${project.build.directory}/${project.build.finalName}.deb</deb>
-							<dataSet>
-								<data>
-									<src>${project.build.directory}/${project.build.finalName}-exec.jar</src>
-									<dst>oss-cluster.jar</dst>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>/usr/share/opensearchserver</prefix>
-										<user>daemon</user>
-										<group>daemon</group>
-									</mapper>
-								</data>
-								<data>
-									<src>${basedir}/src/deb/data/copyright</src>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>/usr/share/doc/oss-cluster</prefix>
-									</mapper>
-								</data>
-								<data>
-									<src>${basedir}/src/deb/etc/oss-cluster</src>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>/etc/opensearchserver</prefix>
-									</mapper>
-								</data>
-								<data>
-									<src>${basedir}/cluster.yaml</src>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>/var/lib/opensearchserver</prefix>
-									</mapper>
-								</data>
-								<data>
-									<src>${basedir}/src/deb/init.d</src>
-									<type>directory</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>/etc/init.d</prefix>
-										<filemode>755</filemode>
-									</mapper>
-								</data>
-								<data>
-									<type>template</type>
-									<paths>
-										<path>/var/log/opensearchserver/${project.artifactId}</path>
-										<path>/var/run/${project.artifactId}</path>
-									</paths>
-									<mapper>
-										<type>perm</type>
-										<user>opensearchserver</user>
-										<group>daemon</group>
-									</mapper>
-								</data>
-							</dataSet>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>rpm-maven-plugin</artifactId>
-				<version>2.1.2</version>
-				<executions>
-					<execution>
-						<id>generate-rpm</id>
-						<goals>
-							<goal>rpm</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<license>Apache 2.0 (c) 2014, OpenSearchServer Inc.</license>
-					<group>Application/Internet</group>
-					<packager>OpenSearchServer</packager>
-					<version>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}</version>
-					<prefix>/usr/local</prefix>
-					<mappings>
-						<mapping>
-							<directory>/usr/share/opensearchserver</directory>
-							<username>opensearchserver</username>
-							<groupname>daemon</groupname>
-							<sources>
-								<source>
-									<location>${project.build.directory}/${project.build.finalName}-exec.jar</location>
-									<destination>oss-cluster.jar</destination>
-								</source>
-								<source>
-									<location>src/deb/init.d/oss-cluster</location>
-								</source>
-							</sources>
-						</mapping>
-						<mapping>
-							<directory>/etc/opensearchserver</directory>
-							<configuration>true</configuration>
-							<sources>
-								<source>
-									<location>src/deb/etc/oss-cluster</location>
-								</source>
-							</sources>
-						</mapping>
-						<mapping>
-							<directory>/var/log/opensearchserver/oss-cluster</directory>
-							<username>opensearchserver</username>
-						</mapping>
-						<mapping>
-							<directory>/var/lib/opensearchserver</directory>
-							<username>opensearchserver</username>
-							<sources>
-								<source>
-									<location>cluster.yaml</location>
-								</source>
-							</sources>
-						</mapping>
-					</mappings>
-					<requires>
-						<require>java &gt;= 1.8.0</require>
-					</requires>
-					<preinstallScriptlet>
-						<scriptFile>src/rpm/preinst</scriptFile>
-					</preinstallScriptlet>
-					<postinstallScriptlet>
-						<scriptFile>src/rpm/postinst</scriptFile>
-					</postinstallScriptlet>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -439,5 +273,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	<description>Clustering for OpenSearchServer.</description>
+	<description>Clustering module for QWAZR.</description>
 </project>
