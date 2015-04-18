@@ -75,7 +75,7 @@ public class ClusterManager {
 	public static final String CLUSTER_CONFIGURATION_NAME = "cluster.yaml";
 
 	private static final String CLUSTER_CONF_PATH = System
-			.getProperty("com.opensearchserver.cluster.conf");
+			.getProperty("com.qwazr.cluster.conf");
 
 	private final ClusterNodeMap clusterNodeMap;
 
