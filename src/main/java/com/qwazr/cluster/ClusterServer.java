@@ -37,7 +37,7 @@ public class ClusterServer extends AbstractServer {
 
 	public final static ServerDefinition serverDefinition = new ServerDefinition();
 	static {
-		serverDefinition.defaultWebApplicationTcpPort = 9099;
+		serverDefinition.defaultWebServiceTcpPort = 9099;
 		serverDefinition.mainJarPath = "qwazr-cluster.jar";
 	}
 
