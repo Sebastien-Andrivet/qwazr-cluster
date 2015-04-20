@@ -35,9 +35,11 @@ import com.qwazr.utils.server.ServletApplication;
 
 public class ClusterServer extends AbstractServer {
 
-	public final static int DEFAULT_PORT = 9099;
-	public final static String DEFAULT_HOSTNAME = "0.0.0.0";
-	private final static String MAIN_JAR = "oss-cluster.jar";
+	public final static ServerDefinition serverDefinition = new ServerDefinition();
+	static {
+		serverDefinition.defaultWebApplicationTcpPort = 9099;
+		serverDefinition.mainJarPath = "qwazr-cluster.jar";
+	}
 
 	/**
 	 * Set the listening host or IP address
@@ -48,7 +50,7 @@ public class ClusterServer extends AbstractServer {
 	private File configurationFile = null;
 
 	private ClusterServer() {
-		super(DEFAULT_HOSTNAME, DEFAULT_PORT, MAIN_JAR, null);
+		super(serverDefinition);
 	}
 
 	@ApplicationPath("/")

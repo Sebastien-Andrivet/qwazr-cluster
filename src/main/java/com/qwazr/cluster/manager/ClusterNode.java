@@ -67,8 +67,8 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 	 */
 	ClusterNode(String address, Set<String> services)
 			throws URISyntaxException, ServerException {
-		this.baseURI = toUri(address, null);
-		this.address = baseURI.toString().intern();
+		this.baseURI = toUri(address);
+		this.address = baseURI.toString();
 		this.services = services;
 		checkURI = new URI(baseURI.getScheme(), null, baseURI.getHost(),
 				baseURI.getPort(), "/cluster", null, null);
@@ -178,33 +178,25 @@ public class ClusterNode implements FutureCallback<HttpResponse> {
 		logger.info("Update services for " + address);
 	}
 
-	private static URI toUri(String hostname, Integer port)
-			throws URISyntaxException {
-		if (!hostname.contains("//"))
-			hostname = "//" + hostname;
-		URI u = new URI(hostname);
-		if (port == null)
-			port = u.getPort();
-		if (port == -1)
-			port = ClusterManager.INSTANCE.port;
+	private static URI toUri(String address) throws URISyntaxException {
+		if (!address.contains("//"))
+			address = "//" + address;
+		URI u = new URI(address);
 		return new URI(StringUtils.isEmpty(u.getScheme()) ? "http"
-				: u.getScheme(), null, u.getHost(), port, null, null, null);
+				: u.getScheme(), null, u.getHost(), u.getPort(), null, null,
+				null);
 	}
 
 	/**
 	 * Format an address which can be used in hashset or hashmap
 	 * 
 	 * @param hostname
-	 *            the hostname
-	 * @param port
-	 *            the optional port
+	 *            the address and port
 	 * @return the address usable as a key
 	 * @throws URISyntaxException
 	 *             thrown if the hostname format is not valid
 	 */
-	public static String toAddress(String hostname, Integer port)
-			throws URISyntaxException {
-		return toUri(hostname, port).toString().intern();
+	public static String toAddress(String hostname) throws URISyntaxException {
+		return toUri(hostname).toString().intern();
 	}
-
 }
