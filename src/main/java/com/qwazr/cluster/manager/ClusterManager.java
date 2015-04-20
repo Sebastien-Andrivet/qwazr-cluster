@@ -91,12 +91,9 @@ public class ClusterManager {
 
 	private final boolean isMaster;
 
-	protected int port;
-
 	private ClusterManager(AbstractServer server, File rootDirectory,
 			File configurationFile) throws IOException, URISyntaxException {
-		this.port = server.getRestTcpPort();
-		myAddress = ClusterNode.toAddress(server.getCurrentHostname(), port);
+		myAddress = ClusterNode.toAddress(server.getWebServicePublicAddress());
 		logger.info("Server: " + myAddress);
 
 		// Look for the configuration file
@@ -128,10 +125,10 @@ public class ClusterManager {
 		boolean isMaster = false;
 		clusterMasterSet = new HashSet<String>();
 		for (String master : clusterConfiguration.masters) {
-			String address = ClusterNode.toAddress(master, null);
-			logger.info("Add a master: " + address);
-			clusterMasterSet.add(address);
-			if (address == myAddress) {
+			String masterAddress = ClusterNode.toAddress(master);
+			logger.info("Add a master: " + masterAddress);
+			clusterMasterSet.add(masterAddress);
+			if (masterAddress == myAddress) {
 				isMaster = true;
 				logger.info("I am a master!");
 			}

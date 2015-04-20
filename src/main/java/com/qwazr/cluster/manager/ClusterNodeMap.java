@@ -198,13 +198,11 @@ public class ClusterNodeMap {
 	 * Remove the node
 	 * 
 	 * @param address
-	 *            the address of the node
+	 *            the address of the node, in the form host:port
 	 * @return the removed node
 	 * @throws URISyntaxException
 	 */
 	ClusterNode remove(String address) throws URISyntaxException {
-
-		address = ClusterNode.toAddress(address, null);
 
 		// Let's check if we know the node
 		readWriteLock.r.lock();

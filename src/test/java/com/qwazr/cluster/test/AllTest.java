@@ -36,14 +36,15 @@ import com.qwazr.cluster.client.ClusterSingleClient;
 import com.qwazr.cluster.service.ClusterNodeRegisterJson;
 import com.qwazr.cluster.service.ClusterNodeStatusJson;
 import com.qwazr.cluster.service.ClusterServiceStatusJson;
-import com.qwazr.cluster.service.ClusterStatusJson;
 import com.qwazr.cluster.service.ClusterServiceStatusJson.StatusEnum;
+import com.qwazr.cluster.service.ClusterStatusJson;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class AllTest {
 
 	private final String CLIENT_ADDRESS = "http://"
-			+ ClusterServer.DEFAULT_HOSTNAME + ':' + ClusterServer.DEFAULT_PORT;
+			+ ClusterServer.serverDefinition.defaultHostname + ':'
+			+ ClusterServer.serverDefinition.defaultWebServiceTcpPort;
 
 	private final int CLIENT_TIMEOUT = 60000;
 
